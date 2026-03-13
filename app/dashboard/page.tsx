@@ -58,7 +58,7 @@ const styles: Record<string, React.CSSProperties> = {
   title: {
     fontSize: "clamp(1.8rem, 6vw, 2.4rem)",
     fontWeight: 700,
-    color: "#1a2e45",
+    color: "#2f6690",
     letterSpacing: "-0.02em",
     margin: "0 0 8px",
   },
@@ -71,7 +71,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: "12px 28px",
     borderRadius: "10px",
     border: "none",
-    backgroundColor: "#1a2e45",
+    backgroundColor: "#2f6690",
     color: "#fff",
     fontSize: "0.95rem",
     fontWeight: 600,

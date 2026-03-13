@@ -17,6 +17,8 @@ type Props = {
 export default function HabitList({ habits, entries, userId, today, dateLabel, onHabitsChange, onEntriesChange }: Props) {
   const [resetting, setResetting] = useState(false)
   const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [draggingId, setDraggingId] = useState<string | null>(null)
+  const [dropIndex, setDropIndex] = useState<number | null>(null)
 
   const allComplete = habits.length > 0 && habits.every((h) => {
     const e = entries.find((en) => en.habit_id === h.id)
@@ -46,6 +48,56 @@ export default function HabitList({ habits, entries, userId, today, dateLabel, o
   function handleDelete(habitId: string) {
     onHabitsChange(habits.filter((h) => h.id !== habitId))
     onEntriesChange(entries.filter((e) => e.habit_id !== habitId))
+  }
+
+  function handleDragStart(habitId: string) {
+    setDraggingId(habitId)
+    const index = habits.findIndex((h) => h.id === habitId)
+    if (index !== -1) setDropIndex(index)
+  }
+
+  async function commitReorder() {
+    if (!draggingId || dropIndex === null) {
+      setDraggingId(null)
+      setDropIndex(null)
+      return
+    }
+
+    const fromIndex = habits.findIndex((h) => h.id === draggingId)
+    if (fromIndex === -1 || fromIndex === dropIndex) {
+      setDraggingId(null)
+      setDropIndex(null)
+      return
+    }
+
+    const updated = [...habits]
+    const [moved] = updated.splice(fromIndex, 1)
+    updated.splice(dropIndex, 0, moved)
+    onHabitsChange(updated)
+
+    setDraggingId(null)
+    setDropIndex(null)
+
+    // Persist sort_order for all habits based on their new index
+    try {
+      for (let i = 0; i < updated.length; i++) {
+        // eslint-disable-next-line no-await-in-loop
+        await supabase.from("habits").update({ sort_order: i }).eq("id", updated[i].id)
+      }
+    } catch {
+      // ignore; next load will re-sync from server
+    }
+  }
+
+  function handleDragEnd() {
+    void commitReorder()
+  }
+
+  function handleDragEnter(overId: string) {
+    if (!draggingId) return
+    const overIndex = habits.findIndex((h) => h.id === overId)
+    if (overIndex === -1) return
+    setDropIndex(overIndex)
   }
 
   async function addHabit() {
@@ -131,20 +183,54 @@ export default function HabitList({ habits, entries, userId, today, dateLabel, o
       </div>
 
       {/* Habit rows */}
-      <div>
-        {habits.map((h) => (
-          <HabitItem
-            key={h.id}
-            habit={h}
-            entry={entries.find((e) => e.habit_id === h.id)}
-            allComplete={allComplete}
-            userId={userId}
-            today={today}
-            onToggle={handleToggle}
-            onTitleChange={handleTitleChange}
-            onDelete={handleDelete}
-          />
+      <div
+        onDragOver={(e) => {
+          // Allow dropping anywhere in the list
+          e.preventDefault()
+        }}
+        onDrop={(e) => {
+          e.preventDefault()
+          handleDragEnd()
+        }}
+      >
+        {habits.map((h, index) => (
+          <div key={h.id}>
+            {draggingId && dropIndex === index && (
+              <div
+                style={{
+                  height: 3,
+                  borderRadius: 999,
+                  background: "rgba(47,102,144,0.6)",
+                  margin: "2px 0 6px",
+                }}
+              />
+            )}
+            <HabitItem
+              habit={h}
+              entry={entries.find((e) => e.habit_id === h.id)}
+              allComplete={allComplete}
+              userId={userId}
+              today={today}
+              onToggle={handleToggle}
+              onTitleChange={handleTitleChange}
+              onDelete={handleDelete}
+              onDragStart={handleDragStart}
+              onDragEnter={handleDragEnter}
+              onDragEnd={handleDragEnd}
+              isDragging={draggingId === h.id}
+            />
+          </div>
         ))}
+        {draggingId && dropIndex === habits.length && (
+          <div
+            style={{
+              height: 3,
+              borderRadius: 999,
+              background: "rgba(47,102,144,0.6)",
+              margin: "4px 0 0",
+            }}
+          />
+        )}
       </div>
 
       {/* Add Habit */}
@@ -162,14 +248,12 @@ export default function HabitList({ habits, entries, userId, today, dateLabel, o
             fontSize: "0.9rem",
             cursor: "pointer",
             fontFamily: "inherit",
-            transition: "border-color 0.2s, color 0.2s",
+            transition: "color 0.2s",
           }}
           onMouseEnter={(e) => {
-            ;(e.currentTarget as HTMLButtonElement).style.borderColor = "#1a2e45"
-            ;(e.currentTarget as HTMLButtonElement).style.color = "#1a2e45"
+            ;(e.currentTarget as HTMLButtonElement).style.color = "#2f6690"
           }}
           onMouseLeave={(e) => {
-            ;(e.currentTarget as HTMLButtonElement).style.borderColor = "#b0d2e3"
             ;(e.currentTarget as HTMLButtonElement).style.color = "#5a7a99"
           }}
         >

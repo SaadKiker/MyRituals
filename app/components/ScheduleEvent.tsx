@@ -73,9 +73,9 @@ export default function ScheduleEvent({ event, entry, allComplete, onEdit, onCon
   let borderLeft = `4px solid rgba(0,0,0,0.2)`
   let boxShadow = "0 2px 6px rgba(0,0,0,0.15)"
   if (status === "completed") {
-    bg = allComplete ? "rgba(255,215,0,0.85)" : "rgba(48,209,88,0.7)"
-    borderLeft = allComplete ? "4px solid rgba(255,215,0,1)" : "3px solid rgba(48,209,88,0.9)"
-    boxShadow = allComplete ? "0 4px 12px rgba(255,215,0,0.4)" : "0 2px 6px rgba(48,209,88,0.3)"
+    bg = allComplete ? "rgba(234,179,8,0.9)" : "rgba(34,197,94,0.85)"
+    borderLeft = allComplete ? "4px solid #eab308" : "4px solid #22c55e"
+    boxShadow = allComplete ? "0 6px 20px rgba(234,179,8,0.45)" : "0 4px 14px rgba(34,197,94,0.4)"
   } else if (status === "skipped") {
     bg = "rgba(255,69,58,0.65)"
     borderLeft = "3px solid rgba(255,69,58,0.9)"

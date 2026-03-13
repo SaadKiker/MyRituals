@@ -66,11 +66,11 @@ export default function EventEditor({ event, defaultHour, entry, userId, onSave,
 
   const inputStyle: React.CSSProperties = {
     width: "100%",
-    background: "rgba(26,46,69,0.06)",
+    background: "rgba(47,102,144,0.06)",
     border: "1.5px solid #c8dfe9",
     borderRadius: 8,
     padding: "8px 10px",
-    color: "#1a2e45",
+    color: "#2f6690",
     fontSize: 14,
     fontFamily: "inherit",
     outline: "none",
@@ -79,11 +79,11 @@ export default function EventEditor({ event, defaultHour, entry, userId, onSave,
 
   const selectStyle: React.CSSProperties = {
     flex: 1,
-    background: "rgba(26,46,69,0.06)",
+    background: "rgba(47,102,144,0.06)",
     border: "1.5px solid #c8dfe9",
     borderRadius: 8,
     padding: "7px 6px",
-    color: "#1a2e45",
+    color: "#2f6690",
     fontSize: 14,
     fontFamily: "inherit",
     outline: "none",
@@ -113,14 +113,14 @@ export default function EventEditor({ event, defaultHour, entry, userId, onSave,
           background: "#f4f9fc",
           borderRadius: 16,
           padding: 24,
-          boxShadow: "0 20px 48px rgba(26,46,69,0.25)",
+          boxShadow: "0 20px 48px rgba(47,102,144,0.25)",
           border: "1.5px solid #c8dfe9",
           zIndex: 100,
           maxHeight: "90vh",
           overflowY: "auto",
         }}
       >
-        <div style={{ fontWeight: 700, fontSize: 17, color: "#1a2e45", marginBottom: 18 }}>
+        <div style={{ fontWeight: 700, fontSize: 17, color: "#2f6690", marginBottom: 18 }}>
           {isNew ? "New Event" : "Edit Event"}
         </div>
 
@@ -184,7 +184,7 @@ export default function EventEditor({ event, defaultHour, entry, userId, onSave,
                   borderRadius: "50%",
                   background: c,
                   cursor: "pointer",
-                  border: color === c ? "2.5px solid #1a2e45" : "2px solid transparent",
+                  border: color === c ? "2.5px solid #2f6690" : "2px solid transparent",
                   transform: color === c ? "scale(1.15)" : "scale(1)",
                   transition: "transform 0.15s, border 0.15s",
                 }}
@@ -200,14 +200,14 @@ export default function EventEditor({ event, defaultHour, entry, userId, onSave,
             <div style={{ display: "flex", gap: 8 }}>
               {(["completed", "skipped", null] as const).map((s) => {
                 const active = status === s
-                let bg = "rgba(26,46,69,0.06)"
+                let bg = "rgba(47,102,144,0.06)"
                 let borderColor = "#c8dfe9"
                 let textColor = "#5a7a99"
                 let label = s === null ? "Clear" : s.charAt(0).toUpperCase() + s.slice(1)
                 if (s === "completed") {
-                  bg = active ? "#30d158" : "rgba(48,209,88,0.08)"
-                  borderColor = active ? "#30d158" : "rgba(48,209,88,0.3)"
-                  textColor = active ? "#fff" : "#1a9a40"
+                  bg = active ? "#22c55e" : "rgba(34,197,94,0.12)"
+                  borderColor = active ? "#22c55e" : "rgba(34,197,94,0.4)"
+                  textColor = active ? "#fff" : "#166534"
                 } else if (s === "skipped") {
                   bg = active ? "#ff453a" : "rgba(255,69,58,0.08)"
                   borderColor = active ? "#ff453a" : "rgba(255,69,58,0.3)"
@@ -279,7 +279,7 @@ export default function EventEditor({ event, defaultHour, entry, userId, onSave,
           <button
             onClick={handleSave}
             style={{
-              background: "#1a2e45",
+              background: "#2f6690",
               color: "#fff",
               border: "none",
               borderRadius: 8,

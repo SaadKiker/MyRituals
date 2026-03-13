@@ -103,7 +103,7 @@ export default function GoalSet({ goalSet, userId, onDelete, onUpdate }: Props) 
       style={{
         marginBottom: 48,
         paddingBottom: 32,
-        borderBottom: "1px solid rgba(26,46,69,0.08)",
+        borderBottom: "1px solid rgba(47,102,144,0.08)",
       }}
     >
       {/* Set Header */}
@@ -119,7 +119,7 @@ export default function GoalSet({ goalSet, userId, onDelete, onUpdate }: Props) 
           style={{
             fontSize: "clamp(1.2rem, 4vw, 1.5rem)",
             fontWeight: 700,
-            color: "#1a2e45",
+            color: "#2f6690",
             background: "transparent",
             border: "none",
             outline: "none",
@@ -137,12 +137,12 @@ export default function GoalSet({ goalSet, userId, onDelete, onUpdate }: Props) 
               display: "flex",
               alignItems: "center",
               gap: 6,
-              background: "rgba(26,46,69,0.08)",
-              border: "1px solid rgba(26,46,69,0.18)",
+              background: "rgba(47,102,144,0.08)",
+              border: "1px solid rgba(47,102,144,0.18)",
               borderRadius: 8,
               padding: "6px 12px",
               fontSize: "0.88rem",
-              color: "#1a2e45",
+              color: "#2f6690",
               fontWeight: 600,
               whiteSpace: "nowrap",
               cursor: "pointer",
@@ -218,14 +218,12 @@ export default function GoalSet({ goalSet, userId, onDelete, onUpdate }: Props) 
           fontSize: "0.9rem",
           cursor: "pointer",
           fontFamily: "inherit",
-          transition: "border-color 0.2s, color 0.2s",
+          transition: "color 0.2s",
         }}
         onMouseEnter={(e) => {
-          ;(e.currentTarget as HTMLButtonElement).style.borderColor = "#1a2e45"
-          ;(e.currentTarget as HTMLButtonElement).style.color = "#1a2e45"
+          ;(e.currentTarget as HTMLButtonElement).style.color = "#2f6690"
         }}
         onMouseLeave={(e) => {
-          ;(e.currentTarget as HTMLButtonElement).style.borderColor = "#b0d2e3"
           ;(e.currentTarget as HTMLButtonElement).style.color = "#5a7a99"
         }}
       >

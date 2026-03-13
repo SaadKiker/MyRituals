@@ -28,6 +28,10 @@ type Props = {
   onToggle: (habitId: string) => void
   onTitleChange: (habitId: string, title: string) => void
   onDelete: (habitId: string) => void
+  onDragStart: (habitId: string) => void
+  onDragEnter: (habitId: string) => void
+  onDragEnd: () => void
+  isDragging: boolean
 }
 
 export default function HabitItem({
@@ -39,9 +43,17 @@ export default function HabitItem({
   onToggle,
   onTitleChange,
   onDelete,
+  onDragStart,
+  onDragEnter,
+  onDragEnd,
+  isDragging,
 }: Props) {
   const checked = entry?.completed === 1
   const titleTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  function handleDragStart() {
+    onDragStart(habit.id)
+  }
 
   async function handleToggle() {
     onToggle(habit.id)
@@ -73,16 +85,20 @@ export default function HabitItem({
   return (
     <div
       className={`habit-row${habit.group_end ? " group-end" : ""}`}
+      draggable
+      onDragStart={handleDragStart}
+      onDragEnter={() => onDragEnter(habit.id)}
+      onDragEnd={onDragEnd}
       style={{
         background: checked
           ? allComplete
-            ? "#fffde8"
-            : "#eef9f2"
+            ? "#fef9c3"
+            : "#dcfce7"
           : "#fff",
         border: checked
           ? allComplete
-            ? "1.5px solid rgba(255,215,0,0.55)"
-            : "1.5px solid rgba(48,209,88,0.45)"
+            ? "2px solid rgba(234,179,8,0.6)"
+            : "2px solid rgba(34,197,94,0.5)"
           : "1.5px solid #d8eaf3",
         borderRadius: 12,
         padding: "10px 12px",
@@ -92,13 +108,48 @@ export default function HabitItem({
         marginBottom: habit.group_end ? 24 : 8,
         boxShadow: checked
           ? allComplete
-            ? "0 4px 16px rgba(255,215,0,0.2)"
-            : "0 4px 16px rgba(48,209,88,0.15)"
-          : "0 2px 6px rgba(26,46,69,0.05)",
-        transition: "all 0.25s ease",
+            ? "0 6px 20px rgba(234,179,8,0.35), 0 0 0 1px rgba(234,179,8,0.1)"
+            : "0 6px 20px rgba(34,197,94,0.28), 0 0 0 1px rgba(34,197,94,0.08)"
+          : "0 2px 6px rgba(47,102,144,0.05)",
+        transition: "all 0.3s cubic-bezier(0.4,0,0.2,1)",
         position: "relative",
       }}
     >
+      {/* Drag handle + Checkbox */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          marginRight: 4,
+        }}
+      >
+        <button
+          type="button"
+          style={{
+            background: "transparent",
+            border: "none",
+            cursor: "grab",
+            padding: 0,
+            lineHeight: 1,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            opacity: isDragging ? 0.6 : 1,
+          }}
+          aria-label="Reorder habit"
+        >
+          <svg width="10" height="16" viewBox="0 0 10 16" fill="none">
+            {/* 3 rows x 2 columns = 6 bold dots */}
+            <circle cx="2" cy="2" r="1.5" fill="#99b8cc" />
+            <circle cx="8" cy="2" r="1.5" fill="#99b8cc" />
+            <circle cx="2" cy="8" r="1.5" fill="#99b8cc" />
+            <circle cx="8" cy="8" r="1.5" fill="#99b8cc" />
+            <circle cx="2" cy="14" r="1.5" fill="#99b8cc" />
+            <circle cx="8" cy="14" r="1.5" fill="#99b8cc" />
+          </svg>
+        </button>
+      </div>
+
       {/* Checkbox */}
       <div
         onClick={handleToggle}
@@ -108,22 +159,22 @@ export default function HabitItem({
           borderRadius: 5,
           border: checked
             ? allComplete
-              ? "2px solid #ffd700"
-              : "2px solid #30d158"
+              ? "2px solid #eab308"
+              : "2px solid #22c55e"
             : "2px solid #b0d2e3",
           background: checked
             ? allComplete
-              ? "#ffd700"
-              : "#30d158"
+              ? "#eab308"
+              : "#22c55e"
             : "transparent",
           cursor: "pointer",
           flexShrink: 0,
-          transition: "all 0.25s cubic-bezier(0.4,0,0.2,1)",
-          transform: checked ? "scale(1.05)" : "scale(1)",
+          transition: "all 0.3s cubic-bezier(0.4,0,0.2,1)",
+          transform: checked ? "scale(1.08)" : "scale(1)",
           boxShadow: checked
             ? allComplete
-              ? "0 3px 10px rgba(255,215,0,0.45)"
-              : "0 3px 10px rgba(48,209,88,0.35)"
+              ? "0 4px 14px rgba(234,179,8,0.55)"
+              : "0 4px 14px rgba(34,197,94,0.45)"
             : "none",
           display: "flex",
           alignItems: "center",
@@ -152,9 +203,9 @@ export default function HabitItem({
           fontWeight: checked ? 600 : 500,
           color: checked
             ? allComplete
-              ? "#b8960a"
-              : "#1a9a40"
-            : "#1a2e45",
+              ? "#a16207"
+              : "#166534"
+            : "#2f6690",
           transition: "color 0.25s",
           padding: 0,
         }}

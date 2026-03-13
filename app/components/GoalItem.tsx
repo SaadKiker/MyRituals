@@ -49,23 +49,24 @@ export default function GoalItem({ goal, allComplete, onDelete, onUpdate }: Prop
   const cardStyle: React.CSSProperties = {
     background: done
       ? allComplete
-        ? "#fffde8"
-        : "#eef9f2"
+        ? "#fef9c3"
+        : "#dcfce7"
       : "#fff",
     borderRadius: 12,
     padding: "16px 18px",
     marginBottom: 10,
     border: done
       ? allComplete
-        ? "1.5px solid rgba(255,215,0,0.5)"
-        : "1.5px solid rgba(48,209,88,0.4)"
+        ? "2px solid rgba(234,179,8,0.6)"
+        : "2px solid rgba(34,197,94,0.5)"
       : "1.5px solid #d8eaf3",
     boxShadow: done
       ? allComplete
-        ? "0 4px 16px rgba(255,215,0,0.15)"
-        : "0 4px 16px rgba(48,209,88,0.12)"
-      : "0 2px 8px rgba(26,46,69,0.06)",
+        ? "0 6px 20px rgba(234,179,8,0.35), 0 0 0 1px rgba(234,179,8,0.1)"
+        : "0 6px 20px rgba(34,197,94,0.28), 0 0 0 1px rgba(34,197,94,0.08)"
+      : "0 2px 8px rgba(47,102,144,0.06)",
     position: "relative",
+    transition: "box-shadow 0.3s ease, border-color 0.3s ease, background 0.3s ease",
   }
 
   return (
@@ -85,7 +86,7 @@ export default function GoalItem({ goal, allComplete, onDelete, onUpdate }: Prop
             background: "transparent",
             fontSize: "0.95rem",
             fontWeight: 500,
-            color: "#1a2e45",
+            color: "#2f6690",
             fontFamily: "inherit",
             padding: "2px 0",
             marginRight: 8,
@@ -117,8 +118,9 @@ export default function GoalItem({ goal, allComplete, onDelete, onUpdate }: Prop
             height: "100%",
             width: `${pct}%`,
             borderRadius: 4,
-            background: done ? (allComplete ? "#ffd700" : "#30d158") : "#1a2e45",
+            background: done ? (allComplete ? "#eab308" : "#22c55e") : "#2f6690",
             transition: "width 0.4s cubic-bezier(0.2,0.8,0.2,1)",
+            boxShadow: done ? (allComplete ? "0 2px 8px rgba(234,179,8,0.5)" : "0 2px 8px rgba(34,197,94,0.4)") : "none",
           }}
         />
       </div>
@@ -138,7 +140,7 @@ export default function GoalItem({ goal, allComplete, onDelete, onUpdate }: Prop
               padding: "3px 6px",
               fontSize: "0.85rem",
               textAlign: "center",
-              color: "#1a2e45",
+              color: "#2f6690",
               fontFamily: "inherit",
               outline: "none",
             }}
@@ -157,7 +159,7 @@ export default function GoalItem({ goal, allComplete, onDelete, onUpdate }: Prop
               padding: "3px 6px",
               fontSize: "0.85rem",
               textAlign: "center",
-              color: "#1a2e45",
+              color: "#2f6690",
               fontFamily: "inherit",
               outline: "none",
             }}
@@ -165,9 +167,9 @@ export default function GoalItem({ goal, allComplete, onDelete, onUpdate }: Prop
         </div>
         <span
           style={{
-            fontWeight: 600,
+            fontWeight: done ? 700 : 600,
             fontSize: "0.88rem",
-            color: done ? (allComplete ? "#b8960a" : "#1a9a40") : "#5a7a99",
+            color: done ? (allComplete ? "#a16207" : "#166534") : "#5a7a99",
           }}
         >
           {Math.round(pct)}%
