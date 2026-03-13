@@ -11,6 +11,21 @@ function getToday() {
   return new Date().toISOString().split("T")[0]
 }
 
+function buildHoursRange(wakeHour: number, sleepHour: number): number[] {
+  const hours: number[] = []
+  let h = wakeHour
+  while (h !== sleepHour) {
+    hours.push(h)
+    h = (h + 1) % 24
+  }
+  hours.push(sleepHour)
+  return hours
+}
+
+function fmt(h: number) {
+  return String(h).padStart(2, "0") + ":00"
+}
+
 type ContextMenu = { event: ScheduleEventType; x: number; y: number }
 
 type EditorState = {
@@ -28,6 +43,45 @@ export default function SchedulePage() {
   const [resetting, setResetting] = useState(false)
   const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const today = getToday()
+
+  const [wakeHour, setWakeHour] = useState(12)
+  const [sleepHour, setSleepHour] = useState(6)
+  const [showSettings, setShowSettings] = useState(false)
+  const [tempWake, setTempWake] = useState(12)
+  const [tempSleep, setTempSleep] = useState(6)
+
+  useEffect(() => {
+    supabase
+      .from("user_preferences")
+      .select("wake_hour, sleep_hour")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          setWakeHour(data.wake_hour)
+          setSleepHour(data.sleep_hour)
+        }
+      })
+  }, [user.id])
+
+  const calHours = buildHoursRange(wakeHour, sleepHour)
+  const calStartHours = calHours.slice(0, -1)
+
+  function openSettings() {
+    setTempWake(wakeHour)
+    setTempSleep(sleepHour)
+    setShowSettings(true)
+  }
+
+  async function applySettings() {
+    setWakeHour(tempWake)
+    setSleepHour(tempSleep)
+    setShowSettings(false)
+    await supabase.from("user_preferences").upsert(
+      { user_id: user.id, wake_hour: tempWake, sleep_hour: tempSleep },
+      { onConflict: "user_id" }
+    )
+  }
 
   useEffect(() => {
     Promise.all([
@@ -164,6 +218,125 @@ export default function SchedulePage() {
           <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#5a7a99", textTransform: "uppercase", letterSpacing: "0.06em" }}>
             {dateLabel}
           </span>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, position: "relative" }}>
+            {/* Sleep Hours Button */}
+            <div style={{ position: "relative" }}>
+              <button
+                onClick={openSettings}
+                title="Set wake & sleep hours"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
+                  padding: "6px 10px",
+                  borderRadius: 8,
+                  border: "1px solid #c8dfe9",
+                  background: "rgba(47,102,144,0.06)",
+                  color: "#5a7a99",
+                  fontSize: "0.78rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                }}
+              >
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+                {fmt(wakeHour)} – {fmt(sleepHour)}
+              </button>
+
+              {showSettings && (
+                <>
+                  <div
+                    onClick={() => setShowSettings(false)}
+                    style={{ position: "fixed", inset: 0, zIndex: 199 }}
+                  />
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "calc(100% + 8px)",
+                      right: 0,
+                      background: "#f4f9fc",
+                      border: "1.5px solid #c8dfe9",
+                      borderRadius: 12,
+                      padding: 16,
+                      boxShadow: "0 8px 24px rgba(47,102,144,0.18)",
+                      zIndex: 200,
+                      minWidth: 200,
+                    }}
+                  >
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "#2f6690", marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                      Hours
+                    </div>
+                    <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ display: "block", fontSize: 10, color: "#7a9ab5", fontWeight: 600, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>Wake</label>
+                        <select
+                          value={tempWake}
+                          onChange={(e) => setTempWake(parseInt(e.target.value))}
+                          style={{
+                            width: "100%",
+                            background: "rgba(47,102,144,0.06)",
+                            border: "1.5px solid #c8dfe9",
+                            borderRadius: 7,
+                            padding: "6px 4px",
+                            color: "#2f6690",
+                            fontSize: 13,
+                            fontFamily: "inherit",
+                            outline: "none",
+                          }}
+                        >
+                          {Array.from({ length: 24 }, (_, i) => i).map((h) => (
+                            <option key={h} value={h}>{String(h).padStart(2, "0")}:00</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ display: "block", fontSize: 10, color: "#7a9ab5", fontWeight: 600, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>Sleep</label>
+                        <select
+                          value={tempSleep}
+                          onChange={(e) => setTempSleep(parseInt(e.target.value))}
+                          style={{
+                            width: "100%",
+                            background: "rgba(47,102,144,0.06)",
+                            border: "1.5px solid #c8dfe9",
+                            borderRadius: 7,
+                            padding: "6px 4px",
+                            color: "#2f6690",
+                            fontSize: 13,
+                            fontFamily: "inherit",
+                            outline: "none",
+                          }}
+                        >
+                          {Array.from({ length: 24 }, (_, i) => i).map((h) => (
+                            <option key={h} value={h}>{String(h).padStart(2, "0")}:00</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 10, color: "#7a9ab5", marginBottom: 12 }}>
+                      {buildHoursRange(tempWake, tempSleep).length - 1}h shown
+                    </div>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button
+                        onClick={() => setShowSettings(false)}
+                        style={{ flex: 1, padding: "7px 0", borderRadius: 7, border: "1.5px solid #c8dfe9", background: "transparent", color: "#5a7a99", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={applySettings}
+                        style={{ flex: 1, padding: "7px 0", borderRadius: 7, border: "none", background: "#2f6690", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
+                      >
+                        Apply
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
           <div
             onMouseDown={startReset}
             onMouseUp={cancelReset}
@@ -201,12 +374,15 @@ export default function SchedulePage() {
               {resetting ? "Hold…" : "Hold to Reset"}
             </span>
           </div>
+          </div>
         </div>
 
         <ScheduleGrid
           events={events}
           entries={entries}
           allComplete={allComplete}
+          calHours={calHours}
+          calStartHours={calStartHours}
           onGridClick={(hour) => setEditor({ event: null, defaultHour: hour })}
           onEventEdit={(evt) => setEditor({ event: evt, defaultHour: evt.start_hour })}
           onEventContextMenu={(evt, x, y) => setContextMenu({ event: evt, x, y })}
@@ -284,6 +460,8 @@ export default function SchedulePage() {
           defaultHour={editor.defaultHour}
           entry={editor.event ? entries.find((e) => e.event_id === editor.event!.id) : undefined}
           userId={user.id}
+          calHours={calHours}
+          calStartHours={calStartHours}
           onSave={handleSave}
           onDelete={handleDelete}
           onSetStatus={handleSetStatus}

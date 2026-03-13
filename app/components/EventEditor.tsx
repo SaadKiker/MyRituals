@@ -15,22 +15,26 @@ type Props = {
   defaultHour: number
   entry: EventEntry | undefined
   userId: string
+  calHours?: number[]
+  calStartHours?: number[]
   onSave: (data: Omit<ScheduleEventType, "id" | "user_id">, id?: string) => void
   onDelete: (id: string) => void
   onSetStatus: (eventId: string, status: "completed" | "skipped" | null) => void
   onClose: () => void
 }
 
-export default function EventEditor({ event, defaultHour, entry, userId, onSave, onDelete, onSetStatus, onClose }: Props) {
+export default function EventEditor({ event, defaultHour, entry, userId, calHours, calStartHours, onSave, onDelete, onSetStatus, onClose }: Props) {
   const isNew = !event
+  const hours = calHours ?? CAL_ALL_HOURS
+  const startHours = calStartHours ?? CAL_START_HOURS
 
   const [title, setTitle] = useState(event?.title ?? "")
   const [startH, setStartH] = useState(event?.start_hour ?? defaultHour)
   const [startM, setStartM] = useState(event?.start_minute ?? 0)
   const [endH, setEndH] = useState(() => {
     if (event) return event.end_hour
-    const si = CAL_ALL_HOURS.indexOf(defaultHour)
-    return CAL_ALL_HOURS[Math.min(si + 1, CAL_ALL_HOURS.length - 1)]
+    const si = hours.indexOf(defaultHour)
+    return hours[Math.min(si + 1, hours.length - 1)]
   })
   const [endM, setEndM] = useState(event?.end_minute ?? 0)
   const [color, setColor] = useState(resolveColor(event?.color ?? COLORS[0]))
@@ -44,8 +48,8 @@ export default function EventEditor({ event, defaultHour, entry, userId, onSave,
       setEndH(event.end_hour)
       setEndM(event.end_minute)
     } else {
-      const si = CAL_ALL_HOURS.indexOf(defaultHour)
-      setEndH(CAL_ALL_HOURS[Math.min(si + 1, CAL_ALL_HOURS.length - 1)])
+      const si = hours.indexOf(defaultHour)
+      setEndH(hours[Math.min(si + 1, hours.length - 1)])
       setEndM(0)
     }
     setColor(resolveColor(event?.color ?? COLORS[0]))
@@ -53,8 +57,8 @@ export default function EventEditor({ event, defaultHour, entry, userId, onSave,
   }, [event, defaultHour])
 
   function handleSave() {
-    const si = CAL_ALL_HOURS.indexOf(startH)
-    const ei = CAL_ALL_HOURS.indexOf(endH)
+    const si = hours.indexOf(startH)
+    const ei = hours.indexOf(endH)
     if (si === -1 || ei === -1 || ei <= si) {
       setError("End time must be after start time.")
       return
@@ -142,7 +146,7 @@ export default function EventEditor({ event, defaultHour, entry, userId, onSave,
             <label style={{ display: "block", fontSize: 11, color: "#5a7a99", fontWeight: 600, marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>Start</label>
             <div style={{ display: "flex", gap: 4 }}>
               <select value={startH} onChange={(e) => setStartH(parseInt(e.target.value))} style={selectStyle}>
-                {CAL_START_HOURS.map((h) => (
+                {startHours.map((h) => (
                   <option key={h} value={h}>{String(h).padStart(2, "0")}</option>
                 ))}
               </select>
@@ -157,7 +161,7 @@ export default function EventEditor({ event, defaultHour, entry, userId, onSave,
             <label style={{ display: "block", fontSize: 11, color: "#5a7a99", fontWeight: 600, marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>End</label>
             <div style={{ display: "flex", gap: 4 }}>
               <select value={endH} onChange={(e) => setEndH(parseInt(e.target.value))} style={selectStyle}>
-                {CAL_ALL_HOURS.map((h) => (
+                {hours.map((h) => (
                   <option key={h} value={h}>{String(h).padStart(2, "0")}</option>
                 ))}
               </select>

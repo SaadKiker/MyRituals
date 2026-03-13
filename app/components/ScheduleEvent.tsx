@@ -55,15 +55,17 @@ type Props = {
   event: ScheduleEventType
   entry: EventEntry | undefined
   allComplete: boolean
+  calHours?: number[]
   onEdit: (event: ScheduleEventType) => void
   onContextMenu: (event: ScheduleEventType, x: number, y: number) => void
 }
 
-export default function ScheduleEvent({ event, entry, allComplete, onEdit, onContextMenu }: Props) {
-  let startIdx = CAL_ALL_HOURS.indexOf(event.start_hour)
-  let endIdx = CAL_ALL_HOURS.indexOf(event.end_hour)
-  if (startIdx === -1) startIdx = 0
-  if (endIdx === -1 || endIdx <= startIdx) endIdx = Math.min(startIdx + 1, CAL_ALL_HOURS.length - 1)
+export default function ScheduleEvent({ event, entry, allComplete, calHours, onEdit, onContextMenu }: Props) {
+  const hours = calHours ?? CAL_ALL_HOURS
+  let startIdx = hours.indexOf(event.start_hour)
+  let endIdx = hours.indexOf(event.end_hour)
+  if (startIdx === -1) return null
+  if (endIdx === -1 || endIdx <= startIdx) endIdx = Math.min(startIdx + 1, hours.length - 1)
   const durSlots = Math.max(1, endIdx - startIdx)
 
   const status = entry?.status ?? null

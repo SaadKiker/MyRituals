@@ -13,6 +13,8 @@ type Props = {
   events: ScheduleEventType[]
   entries: EventEntry[]
   allComplete: boolean
+  calHours?: number[]
+  calStartHours?: number[]
   onGridClick: (hour: number) => void
   onEventEdit: (event: ScheduleEventType) => void
   onEventContextMenu: (event: ScheduleEventType, x: number, y: number) => void
@@ -22,11 +24,15 @@ export default function ScheduleGrid({
   events,
   entries,
   allComplete,
+  calHours,
+  calStartHours,
   onGridClick,
   onEventEdit,
   onEventContextMenu,
 }: Props) {
   const bodyRef = useRef<HTMLDivElement>(null)
+  const hours = calHours ?? CAL_ALL_HOURS
+  const startHours = calStartHours ?? CAL_START_HOURS
 
   function handleBodyClick(e: React.MouseEvent<HTMLDivElement>) {
     const target = e.target as HTMLElement
@@ -34,11 +40,11 @@ export default function ScheduleGrid({
     const rect = (bodyRef.current as HTMLDivElement).getBoundingClientRect()
     const y = e.clientY - rect.top
     const idx = Math.floor(y / HOUR_H)
-    if (idx < 0 || idx >= CAL_START_HOURS.length) return
-    onGridClick(CAL_START_HOURS[idx])
+    if (idx < 0 || idx >= startHours.length) return
+    onGridClick(startHours[idx])
   }
 
-  const totalH = CAL_ALL_HOURS.length * HOUR_H
+  const totalH = hours.length * HOUR_H
 
   return (
     <div
@@ -63,7 +69,7 @@ export default function ScheduleGrid({
           flexDirection: "column",
         }}
       >
-        {CAL_ALL_HOURS.map((h) => (
+        {hours.map((h) => (
           <div
             key={h}
             style={{
@@ -106,7 +112,7 @@ export default function ScheduleGrid({
               flexDirection: "column",
             }}
           >
-            {CAL_ALL_HOURS.map((h, i) => (
+            {hours.map((h, i) => (
               <div
                 key={h}
                 style={{
@@ -127,6 +133,7 @@ export default function ScheduleGrid({
                   event={evt}
                   entry={entries.find((e) => e.event_id === evt.id)}
                   allComplete={allComplete}
+                  calHours={hours}
                   onEdit={onEventEdit}
                   onContextMenu={onEventContextMenu}
                 />
