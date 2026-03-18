@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
+import Image from "next/image"
 import { supabase } from "../lib/supabase"
 import type { User } from "@supabase/supabase-js"
 
@@ -55,20 +56,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         }}
       >
         {/* Floating Nav - persistent across Goals / Daily / Schedule */}
-        <span
+        <div
           style={{
             position: "fixed",
-            top: 16,
+            top: 10,
             left: 20,
-            fontWeight: 700,
-            fontSize: "1.5rem",
-            color: "#2f6690",
             zIndex: 100,
             pointerEvents: "none",
           }}
         >
-          MyRituals
-        </span>
+          <Image src="/logo.png" alt="MyRituals" height={40} width={160} style={{ objectFit: "contain" }} />
+        </div>
         <button
           onClick={handleLogout}
           style={{

@@ -3,6 +3,7 @@
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import Image from "next/image"
 import { supabase } from "./lib/supabase"
 
 export default function Home() {
@@ -17,7 +18,9 @@ export default function Home() {
   return (
     <main style={styles.main}>
       <div style={styles.card}>
-        <h1 style={styles.title}>MyRituals</h1>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+          <Image src="/logo.png" alt="MyRituals" width={260} height={65} style={{ objectFit: "contain" }} />
+        </div>
         <p style={styles.subtitle}>
           Build habits, schedule your day, reach your goals.
         </p>

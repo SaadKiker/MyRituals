@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import Image from "next/image"
 import { supabase } from "../lib/supabase"
 
 export default function LoginPage() {
@@ -28,7 +29,9 @@ export default function LoginPage() {
   return (
     <main style={styles.main}>
       <div style={styles.card}>
-        <h1 style={styles.title}>MyRituals</h1>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 6 }}>
+          <Image src="/logo.png" alt="MyRituals" width={220} height={55} style={{ objectFit: "contain" }} />
+        </div>
         <p style={styles.subtitle}>Sign in to continue</p>
         <form onSubmit={handleLogin} style={styles.form}>
           <input
