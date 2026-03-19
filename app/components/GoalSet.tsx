@@ -103,7 +103,7 @@ export default function GoalSet({ goalSet, userId, onDelete, onUpdate }: Props) 
       style={{
         marginBottom: 48,
         paddingBottom: 32,
-        borderBottom: "1px solid rgba(47,102,144,0.08)",
+        borderBottom: "1px solid var(--t-p08)",
       }}
     >
       {/* Set Header */}
@@ -119,7 +119,7 @@ export default function GoalSet({ goalSet, userId, onDelete, onUpdate }: Props) 
           style={{
             fontSize: "clamp(1.2rem, 4vw, 1.5rem)",
             fontWeight: 700,
-            color: "#2f6690",
+            color: "var(--t-primary)",
             background: "transparent",
             border: "none",
             outline: "none",
@@ -137,12 +137,12 @@ export default function GoalSet({ goalSet, userId, onDelete, onUpdate }: Props) 
               display: "flex",
               alignItems: "center",
               gap: 6,
-              background: "rgba(47,102,144,0.08)",
-              border: "1px solid rgba(47,102,144,0.18)",
+              background: "var(--t-p08)",
+              border: "1px solid var(--t-p18)",
               borderRadius: 8,
               padding: "6px 12px",
               fontSize: "0.88rem",
-              color: "#2f6690",
+              color: "var(--t-primary)",
               fontWeight: 600,
               whiteSpace: "nowrap",
               cursor: "pointer",
@@ -177,7 +177,7 @@ export default function GoalSet({ goalSet, userId, onDelete, onUpdate }: Props) 
             style={{
               background: "transparent",
               border: "none",
-              color: "#99b8cc",
+              color: "var(--t-icon)",
               fontSize: 22,
               cursor: "pointer",
               padding: "2px 4px",
@@ -211,9 +211,9 @@ export default function GoalSet({ goalSet, userId, onDelete, onUpdate }: Props) 
           marginTop: 8,
           padding: "12px",
           background: "transparent",
-          border: "2px dashed #b0d2e3",
+          border: "2px dashed var(--t-bg)",
           borderRadius: 12,
-          color: "#5a7a99",
+          color: "var(--t-muted)",
           fontWeight: 500,
           fontSize: "0.9rem",
           cursor: "pointer",
@@ -221,10 +221,10 @@ export default function GoalSet({ goalSet, userId, onDelete, onUpdate }: Props) 
           transition: "color 0.2s",
         }}
         onMouseEnter={(e) => {
-          ;(e.currentTarget as HTMLButtonElement).style.color = "#2f6690"
+          ;(e.currentTarget as HTMLButtonElement).style.color = "var(--t-primary)"
         }}
         onMouseLeave={(e) => {
-          ;(e.currentTarget as HTMLButtonElement).style.color = "#5a7a99"
+          ;(e.currentTarget as HTMLButtonElement).style.color = "var(--t-muted)"
         }}
       >
         + Add Goal

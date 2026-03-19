@@ -6,6 +6,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { supabase } from "../lib/supabase"
 import type { User } from "@supabase/supabase-js"
+import { useTheme } from "../context/ThemeContext"
 
 const UserContext = createContext<User | null>(null)
 export function useAppUser() {
@@ -25,13 +26,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const { theme, toggle } = useTheme()
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        router.replace("/login")
-        return
-      }
+      if (!session) { router.replace("/login"); return }
       setUser(session.user)
       setLoading(false)
     })
@@ -46,42 +45,38 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <UserContext.Provider value={user}>
-      <div
-        style={{
-          minHeight: "100vh",
-          backgroundColor: "#b0d2e3",
-          fontFamily: "var(--font-rubik), sans-serif",
-          padding: "0 0 60px",
-          fontSize: "1.125rem",
-        }}
-      >
-        {/* Floating Nav - persistent across Goals / Daily / Schedule */}
-        <div
-          style={{
-            position: "fixed",
-            top: 10,
-            left: 20,
-            zIndex: 100,
-            pointerEvents: "none",
-          }}
-        >
-          <Image src="/logo.png" alt="MyRituals" height={40} width={160} style={{ objectFit: "contain" }} />
+      <div style={{ minHeight: "100vh", backgroundColor: "var(--t-bg)", fontFamily: "var(--font-rubik), sans-serif", padding: "0 0 60px", fontSize: "1.125rem" }}>
+
+        {/* Logo */}
+        <div style={{ position: "fixed", top: 10, left: 20, zIndex: 100, pointerEvents: "none" }}>
+          <Image src={theme === "girl" ? "/logoP.png" : "/logo.png"} alt="MyRituals" height={40} width={160} style={{ objectFit: "contain" }} />
         </div>
-        <button
-          onClick={handleLogout}
+
+        {/* Boy / Girl toggle */}
+        <div
+          onClick={toggle}
+          title={`Switch to ${theme === "boy" ? "girl" : "boy"} theme`}
           style={{
-            position: "fixed",
-            top: 10,
-            right: 14,
-            background: "transparent",
-            border: "none",
-            cursor: "pointer",
-            color: "#5a7a99",
-            padding: 6,
-            zIndex: 100,
+            position: "fixed", top: 13, right: 56, zIndex: 100,
+            display: "flex", alignItems: "center",
+            background: "var(--t-p10)", border: "1.5px solid var(--t-p25)",
+            borderRadius: 20, padding: "3px 4px", cursor: "pointer", gap: 2,
           }}
-          title="Sign out"
         >
+          {(["boy", "girl"] as const).map((t) => (
+            <div key={t} style={{
+              padding: "3px 9px", borderRadius: 14, fontWeight: 700, fontSize: "0.75rem",
+              background: theme === t ? "var(--t-primary)" : "transparent",
+              color: theme === t ? "#fff" : "var(--t-muted)",
+              transition: "all 0.25s",
+            }}>
+              {t === "boy" ? "♂" : "♀"}
+            </div>
+          ))}
+        </div>
+
+        {/* Logout */}
+        <button onClick={handleLogout} style={{ position: "fixed", top: 10, right: 14, background: "transparent", border: "none", cursor: "pointer", color: "var(--t-muted)", padding: 6, zIndex: 100 }} title="Sign out">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
             <polyline points="16 17 21 12 16 7" />
@@ -89,36 +84,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </svg>
         </button>
 
-        {/* Tab Bar - persistent across Goals / Daily / Schedule */}
+        {/* Tab Bar */}
         <div style={{ display: "flex", justifyContent: "center", padding: "52px 24px 0" }}>
-          <div
-            style={{
-              background: "rgba(47,102,144,0.1)",
-              borderRadius: 12,
-              padding: 4,
-              display: "flex",
-              gap: 2,
-            }}
-          >
+          <div style={{ background: "var(--t-p10)", borderRadius: 12, padding: 4, display: "flex", gap: 2 }}>
             {TABS.map(({ label, href }) => {
               const active = pathname === href
               return (
-                <Link
-                  key={label}
-                  href={href}
-                  style={{
-                    padding: "10px 26px",
-                    borderRadius: 8,
-                    background: active ? "rgba(47,102,144,0.15)" : "transparent",
-                    color: active ? "#2f6690" : "#5a7a99",
-                    fontWeight: 600,
-                    fontSize: "1rem",
-                    textDecoration: "none",
-                    boxShadow: active ? "0 2px 8px rgba(47,102,144,0.1)" : "none",
-                    pointerEvents: "auto",
-                    opacity: 1,
-                  }}
-                >
+                <Link key={label} href={href} style={{
+                  padding: "10px 26px", borderRadius: 8,
+                  background: active ? "var(--t-p15)" : "transparent",
+                  color: active ? "var(--t-primary)" : "var(--t-muted)",
+                  fontWeight: 600, fontSize: "1rem", textDecoration: "none",
+                  boxShadow: active ? "0 2px 8px var(--t-p10)" : "none",
+                  pointerEvents: "auto", opacity: 1,
+                }}>
                   {label}
                 </Link>
               )

@@ -70,11 +70,11 @@ export default function EventEditor({ event, defaultHour, entry, userId, calHour
 
   const inputStyle: React.CSSProperties = {
     width: "100%",
-    background: "rgba(47,102,144,0.06)",
-    border: "1.5px solid #c8dfe9",
+    background: "var(--t-p06)",
+    border: "1.5px solid var(--t-input-border)",
     borderRadius: 8,
     padding: "8px 10px",
-    color: "#2f6690",
+    color: "var(--t-primary)",
     fontSize: 14,
     fontFamily: "inherit",
     outline: "none",
@@ -83,11 +83,11 @@ export default function EventEditor({ event, defaultHour, entry, userId, calHour
 
   const selectStyle: React.CSSProperties = {
     flex: 1,
-    background: "rgba(47,102,144,0.06)",
-    border: "1.5px solid #c8dfe9",
+    background: "var(--t-p06)",
+    border: "1.5px solid var(--t-input-border)",
     borderRadius: 8,
     padding: "7px 6px",
-    color: "#2f6690",
+    color: "var(--t-primary)",
     fontSize: 14,
     fontFamily: "inherit",
     outline: "none",
@@ -114,17 +114,17 @@ export default function EventEditor({ event, defaultHour, entry, userId, calHour
           left: "50%",
           transform: "translate(-50%, -50%)",
           width: "min(320px, calc(100vw - 32px))",
-          background: "#f4f9fc",
+          background: "var(--t-panel)",
           borderRadius: 16,
           padding: 24,
-          boxShadow: "0 20px 48px rgba(47,102,144,0.25)",
-          border: "1.5px solid #c8dfe9",
+          boxShadow: "0 20px 48px var(--t-p25)",
+          border: "1.5px solid var(--t-input-border)",
           zIndex: 100,
           maxHeight: "90vh",
           overflowY: "auto",
         }}
       >
-        <div style={{ fontWeight: 700, fontSize: 17, color: "#2f6690", marginBottom: 18 }}>
+        <div style={{ fontWeight: 700, fontSize: 17, color: "var(--t-primary)", marginBottom: 18 }}>
           {isNew ? "New Event" : "Edit Event"}
         </div>
 
@@ -143,7 +143,7 @@ export default function EventEditor({ event, defaultHour, entry, userId, calHour
         {/* Time row */}
         <div style={{ display: "flex", gap: 12, marginBottom: 14 }}>
           <div style={{ flex: 1 }}>
-            <label style={{ display: "block", fontSize: 11, color: "#5a7a99", fontWeight: 600, marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>Start</label>
+            <label style={{ display: "block", fontSize: 11, color: "var(--t-muted)", fontWeight: 600, marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>Start</label>
             <div style={{ display: "flex", gap: 4 }}>
               <select value={startH} onChange={(e) => setStartH(parseInt(e.target.value))} style={selectStyle}>
                 {startHours.map((h) => (
@@ -158,7 +158,7 @@ export default function EventEditor({ event, defaultHour, entry, userId, calHour
             </div>
           </div>
           <div style={{ flex: 1 }}>
-            <label style={{ display: "block", fontSize: 11, color: "#5a7a99", fontWeight: 600, marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>End</label>
+            <label style={{ display: "block", fontSize: 11, color: "var(--t-muted)", fontWeight: 600, marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>End</label>
             <div style={{ display: "flex", gap: 4 }}>
               <select value={endH} onChange={(e) => setEndH(parseInt(e.target.value))} style={selectStyle}>
                 {hours.map((h) => (
@@ -188,7 +188,7 @@ export default function EventEditor({ event, defaultHour, entry, userId, calHour
                   borderRadius: "50%",
                   background: c,
                   cursor: "pointer",
-                  border: color === c ? "2.5px solid #2f6690" : "2px solid transparent",
+                  border: color === c ? "2.5px solid var(--t-primary)" : "2px solid transparent",
                   transform: color === c ? "scale(1.15)" : "scale(1)",
                   transition: "transform 0.15s, border 0.15s",
                 }}
@@ -200,13 +200,13 @@ export default function EventEditor({ event, defaultHour, entry, userId, calHour
         {/* Status (edit mode only) */}
         {!isNew && (
           <div style={{ marginBottom: 16 }}>
-            <label style={{ display: "block", fontSize: 11, color: "#5a7a99", fontWeight: 600, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>Today's Status</label>
+            <label style={{ display: "block", fontSize: 11, color: "var(--t-muted)", fontWeight: 600, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>Today's Status</label>
             <div style={{ display: "flex", gap: 8 }}>
               {(["completed", "skipped", null] as const).map((s) => {
                 const active = status === s
-                let bg = "rgba(47,102,144,0.06)"
-                let borderColor = "#c8dfe9"
-                let textColor = "#5a7a99"
+                let bg = "var(--t-p06)"
+                let borderColor = "var(--t-input-border)"
+                let textColor = "var(--t-muted)"
                 let label = s === null ? "Clear" : s.charAt(0).toUpperCase() + s.slice(1)
                 if (s === "completed") {
                   bg = active ? "#22c55e" : "rgba(34,197,94,0.12)"
@@ -271,7 +271,7 @@ export default function EventEditor({ event, defaultHour, entry, userId, calHour
             style={{
               background: "transparent",
               border: "none",
-              color: "#5a7a99",
+              color: "var(--t-muted)",
               fontWeight: 500,
               fontSize: 14,
               cursor: "pointer",
@@ -283,7 +283,7 @@ export default function EventEditor({ event, defaultHour, entry, userId, calHour
           <button
             onClick={handleSave}
             style={{
-              background: "#2f6690",
+              background: "var(--t-primary)",
               color: "#fff",
               border: "none",
               borderRadius: 8,

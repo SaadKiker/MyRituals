@@ -99,7 +99,7 @@ export default function HabitItem({
           ? allComplete
             ? "2px solid rgba(234,179,8,0.6)"
             : "2px solid rgba(34,197,94,0.5)"
-          : "1.5px solid #d8eaf3",
+          : "1.5px solid var(--t-border)",
         borderRadius: 12,
         padding: "10px 12px",
         display: "flex",
@@ -110,7 +110,7 @@ export default function HabitItem({
           ? allComplete
             ? "0 6px 20px rgba(234,179,8,0.35), 0 0 0 1px rgba(234,179,8,0.1)"
             : "0 6px 20px rgba(34,197,94,0.28), 0 0 0 1px rgba(34,197,94,0.08)"
-          : "0 2px 6px rgba(47,102,144,0.05)",
+          : "0 2px 6px var(--t-p05)",
         transition: "all 0.3s cubic-bezier(0.4,0,0.2,1)",
         position: "relative",
       }}
@@ -138,14 +138,14 @@ export default function HabitItem({
           }}
           aria-label="Reorder habit"
         >
-          <svg width="10" height="16" viewBox="0 0 10 16" fill="none">
+          <svg width="10" height="16" viewBox="0 0 10 16" fill="var(--t-icon)">
             {/* 3 rows x 2 columns = 6 bold dots */}
-            <circle cx="2" cy="2" r="1.5" fill="#99b8cc" />
-            <circle cx="8" cy="2" r="1.5" fill="#99b8cc" />
-            <circle cx="2" cy="8" r="1.5" fill="#99b8cc" />
-            <circle cx="8" cy="8" r="1.5" fill="#99b8cc" />
-            <circle cx="2" cy="14" r="1.5" fill="#99b8cc" />
-            <circle cx="8" cy="14" r="1.5" fill="#99b8cc" />
+            <circle cx="2" cy="2" r="1.5" />
+            <circle cx="8" cy="2" r="1.5" />
+            <circle cx="2" cy="8" r="1.5" />
+            <circle cx="8" cy="8" r="1.5" />
+            <circle cx="2" cy="14" r="1.5" />
+            <circle cx="8" cy="14" r="1.5" />
           </svg>
         </button>
       </div>
@@ -161,7 +161,7 @@ export default function HabitItem({
             ? allComplete
               ? "2px solid #eab308"
               : "2px solid #22c55e"
-            : "2px solid #b0d2e3",
+            : "2px solid var(--t-bg)",
           background: checked
             ? allComplete
               ? "#eab308"
@@ -205,7 +205,7 @@ export default function HabitItem({
             ? allComplete
               ? "#a16207"
               : "#166534"
-            : "#2f6690",
+            : "var(--t-primary)",
           transition: "color 0.25s",
           padding: 0,
         }}
@@ -218,7 +218,7 @@ export default function HabitItem({
         style={{
           background: "transparent",
           border: "none",
-          color: "#99b8cc",
+          color: "var(--t-icon)",
           fontSize: 22,
           cursor: "pointer",
           padding: "2px 4px",

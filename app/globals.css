@@ -5,15 +5,64 @@
   --foreground: #171717;
 }
 
+/* ── Boy (blue) theme ── */
+[data-theme="boy"] {
+  --t-bg:           #b0d2e3;
+  --t-primary:      #2f6690;
+  --t-muted:        #5a7a99;
+  --t-icon:         #99b8cc;
+  --t-border:       #d8eaf3;
+  --t-input-border: #c8dfe9;
+  --t-panel:        #f4f9fc;
+  --t-progress:     #deedf5;
+  --t-time:         #7a9ab5;
+  /* pre-computed rgba values */
+  --t-p02: rgba(47,102,144,0.02);
+  --t-p05: rgba(47,102,144,0.05);
+  --t-p06: rgba(47,102,144,0.06);
+  --t-p08: rgba(47,102,144,0.08);
+  --t-p10: rgba(47,102,144,0.10);
+  --t-p12: rgba(47,102,144,0.12);
+  --t-p15: rgba(47,102,144,0.15);
+  --t-p18: rgba(47,102,144,0.18);
+  --t-p20: rgba(47,102,144,0.20);
+  --t-p25: rgba(47,102,144,0.25);
+  --t-p60: rgba(47,102,144,0.60);
+}
+
+/* ── Girl (pink) theme — same HSL lightness/saturation, hue rotated to ~330° ── */
+[data-theme="girl"] {
+  --t-bg:           #e3b0cc;
+  --t-primary:      #902f60;
+  --t-muted:        #99607a;
+  --t-icon:         #ccb0bf;
+  --t-border:       #f3d8e8;
+  --t-input-border: #e9c8d8;
+  --t-panel:        #fcf4f9;
+  --t-progress:     #f5dee8;
+  --t-time:         #b57a9a;
+  /* pre-computed rgba values */
+  --t-p02: rgba(144,47,96,0.02);
+  --t-p05: rgba(144,47,96,0.05);
+  --t-p06: rgba(144,47,96,0.06);
+  --t-p08: rgba(144,47,96,0.08);
+  --t-p10: rgba(144,47,96,0.10);
+  --t-p12: rgba(144,47,96,0.12);
+  --t-p15: rgba(144,47,96,0.15);
+  --t-p18: rgba(144,47,96,0.18);
+  --t-p20: rgba(144,47,96,0.20);
+  --t-p25: rgba(144,47,96,0.25);
+  --t-p60: rgba(144,47,96,0.60);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-rubik);
 }
 
-html,
-body {
-  background-color: #b0d2e3;
+html, body {
+  background-color: var(--t-bg);
   color: var(--foreground);
   font-family: var(--font-rubik), sans-serif;
 }

@@ -53,9 +53,9 @@ export default function ScheduleGrid({
         height: totalH,
         background: "#fff",
         borderRadius: 12,
-        border: "1.5px solid #d8eaf3",
+        border: "1.5px solid var(--t-border)",
         overflow: "hidden",
-        boxShadow: "0 4px 16px rgba(47,102,144,0.08)",
+        boxShadow: "0 4px 16px var(--t-p08)",
       }}
     >
       {/* Time Axis */}
@@ -63,8 +63,8 @@ export default function ScheduleGrid({
         style={{
           width: 64,
           flexShrink: 0,
-          borderRight: "1.5px solid #d8eaf3",
-          background: "rgba(47,102,144,0.02)",
+          borderRight: "1.5px solid var(--t-border)",
+          background: "var(--t-p02)",
           display: "flex",
           flexDirection: "column",
         }}
@@ -75,13 +75,13 @@ export default function ScheduleGrid({
             style={{
               height: HOUR_H,
               fontSize: 11,
-              color: "#7a9ab5",
+              color: "var(--t-time)",
               display: "flex",
               alignItems: "flex-start",
               justifyContent: "center",
               fontWeight: 600,
               paddingTop: 6,
-              borderBottom: "1px solid rgba(47,102,144,0.05)",
+              borderBottom: "1px solid var(--t-p05)",
               flexShrink: 0,
               boxSizing: "border-box",
             }}
@@ -117,7 +117,7 @@ export default function ScheduleGrid({
                 key={h}
                 style={{
                   height: HOUR_H,
-                  borderTop: i === 0 ? "none" : "1px solid rgba(47,102,144,0.06)",
+                  borderTop: i === 0 ? "none" : "1px solid var(--t-p06)",
                   boxSizing: "border-box",
                   flexShrink: 0,
                 }}

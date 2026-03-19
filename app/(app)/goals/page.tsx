@@ -88,7 +88,7 @@ export default function GoalsPage() {
         }}
       >
         {goalSets.length === 0 ? (
-          <div style={{ textAlign: "center", color: "#5a7a99", marginTop: 60, fontSize: "1rem" }}>
+          <div style={{ textAlign: "center", color: "var(--t-muted)", marginTop: 60, fontSize: "1rem" }}>
             <p>No goals yet.</p>
             <button
               onClick={async () => {
@@ -120,7 +120,7 @@ export default function GoalsPage() {
                 padding: "10px 24px",
                 borderRadius: 10,
                 border: "none",
-                background: "#2f6690",
+                background: "var(--t-primary)",
                 color: "#fff",
                 fontWeight: 600,
                 fontSize: "1rem",
@@ -150,9 +150,9 @@ export default function GoalsPage() {
                   width: 50,
                   height: 50,
                   borderRadius: 12,
-                  border: "2px dashed rgba(47,102,144,0.25)",
+                  border: "2px dashed var(--t-p25)",
                   background: "transparent",
-                  color: "#5a7a99",
+                  color: "var(--t-muted)",
                   fontSize: 24,
                   fontWeight: 600,
                   cursor: "pointer",
@@ -162,10 +162,10 @@ export default function GoalsPage() {
                   transition: "color 0.2s",
                 }}
                 onMouseEnter={(e) => {
-                  ;(e.currentTarget as HTMLButtonElement).style.color = "#2f6690"
+                  ;(e.currentTarget as HTMLButtonElement).style.color = "var(--t-primary)"
                 }}
                 onMouseLeave={(e) => {
-                  ;(e.currentTarget as HTMLButtonElement).style.color = "#5a7a99"
+                  ;(e.currentTarget as HTMLButtonElement).style.color = "var(--t-muted)"
                 }}
                 title="Add Goal Set"
               >

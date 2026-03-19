@@ -53,7 +53,7 @@ export default function DailyPage() {
       `}</style>
       <div style={{ maxWidth: 760, margin: "32px auto 0", padding: "0 20px" }}>
         {habits.length === 0 ? (
-          <div style={{ textAlign: "center", color: "#5a7a99", marginTop: 60, fontSize: "1rem" }}>
+          <div style={{ textAlign: "center", color: "var(--t-muted)", marginTop: 60, fontSize: "1rem" }}>
             <p>No habits yet.</p>
             <button
               onClick={async () => {
@@ -69,7 +69,7 @@ export default function DailyPage() {
                 padding: "10px 24px",
                 borderRadius: 10,
                 border: "none",
-                background: "#2f6690",
+                background: "var(--t-primary)",
                 color: "#fff",
                 fontWeight: 600,
                 fontSize: "1rem",

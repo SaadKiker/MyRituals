@@ -140,7 +140,7 @@ export default function HabitList({ habits, entries, userId, today, dateLabel, o
     <div>
       {/* Controls row */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-        <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#5a7a99", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+        <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--t-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
           {dateLabel}
         </span>
         <div
@@ -200,7 +200,7 @@ export default function HabitList({ habits, entries, userId, today, dateLabel, o
                 style={{
                   height: 3,
                   borderRadius: 999,
-                  background: "rgba(47,102,144,0.6)",
+                  background: "var(--t-p60)",
                   margin: "2px 0 6px",
                 }}
               />
@@ -241,9 +241,9 @@ export default function HabitList({ habits, entries, userId, today, dateLabel, o
             width: "100%",
             padding: "12px",
             background: "transparent",
-            border: "2px dashed #b0d2e3",
+            border: "2px dashed var(--t-bg)",
             borderRadius: 12,
-            color: "#5a7a99",
+            color: "var(--t-muted)",
             fontWeight: 500,
             fontSize: "0.9rem",
             cursor: "pointer",
@@ -251,10 +251,10 @@ export default function HabitList({ habits, entries, userId, today, dateLabel, o
             transition: "color 0.2s",
           }}
           onMouseEnter={(e) => {
-            ;(e.currentTarget as HTMLButtonElement).style.color = "#2f6690"
+            ;(e.currentTarget as HTMLButtonElement).style.color = "var(--t-primary)"
           }}
           onMouseLeave={(e) => {
-            ;(e.currentTarget as HTMLButtonElement).style.color = "#5a7a99"
+            ;(e.currentTarget as HTMLButtonElement).style.color = "var(--t-muted)"
           }}
         >
           + Add Habit

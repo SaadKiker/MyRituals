@@ -215,7 +215,7 @@ export default function SchedulePage() {
             marginBottom: 16,
           }}
         >
-          <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#5a7a99", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+          <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--t-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
             {dateLabel}
           </span>
           <div style={{ display: "flex", alignItems: "center", gap: 8, position: "relative" }}>
@@ -230,9 +230,9 @@ export default function SchedulePage() {
                   gap: 5,
                   padding: "6px 10px",
                   borderRadius: 8,
-                  border: "1px solid #c8dfe9",
-                  background: "rgba(47,102,144,0.06)",
-                  color: "#5a7a99",
+                  border: "1px solid var(--t-input-border)",
+                  background: "var(--t-p06)",
+                  color: "var(--t-muted)",
                   fontSize: "0.78rem",
                   fontWeight: 600,
                   cursor: "pointer",
@@ -257,31 +257,31 @@ export default function SchedulePage() {
                       position: "absolute",
                       top: "calc(100% + 8px)",
                       right: 0,
-                      background: "#f4f9fc",
-                      border: "1.5px solid #c8dfe9",
+                      background: "var(--t-panel)",
+                      border: "1.5px solid var(--t-input-border)",
                       borderRadius: 12,
                       padding: 16,
-                      boxShadow: "0 8px 24px rgba(47,102,144,0.18)",
+                      boxShadow: "0 8px 24px var(--t-p18)",
                       zIndex: 200,
                       minWidth: 200,
                     }}
                   >
-                    <div style={{ fontSize: 12, fontWeight: 700, color: "#2f6690", marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "var(--t-primary)", marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.05em" }}>
                       Hours
                     </div>
                     <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
                       <div style={{ flex: 1 }}>
-                        <label style={{ display: "block", fontSize: 10, color: "#7a9ab5", fontWeight: 600, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>Wake</label>
+                        <label style={{ display: "block", fontSize: 10, color: "var(--t-time)", fontWeight: 600, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>Wake</label>
                         <select
                           value={tempWake}
                           onChange={(e) => setTempWake(parseInt(e.target.value))}
                           style={{
                             width: "100%",
-                            background: "rgba(47,102,144,0.06)",
-                            border: "1.5px solid #c8dfe9",
+                            background: "var(--t-p06)",
+                            border: "1.5px solid var(--t-input-border)",
                             borderRadius: 7,
                             padding: "6px 4px",
-                            color: "#2f6690",
+                            color: "var(--t-primary)",
                             fontSize: 13,
                             fontFamily: "inherit",
                             outline: "none",
@@ -293,17 +293,17 @@ export default function SchedulePage() {
                         </select>
                       </div>
                       <div style={{ flex: 1 }}>
-                        <label style={{ display: "block", fontSize: 10, color: "#7a9ab5", fontWeight: 600, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>Sleep</label>
+                        <label style={{ display: "block", fontSize: 10, color: "var(--t-time)", fontWeight: 600, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>Sleep</label>
                         <select
                           value={tempSleep}
                           onChange={(e) => setTempSleep(parseInt(e.target.value))}
                           style={{
                             width: "100%",
-                            background: "rgba(47,102,144,0.06)",
-                            border: "1.5px solid #c8dfe9",
+                            background: "var(--t-p06)",
+                            border: "1.5px solid var(--t-input-border)",
                             borderRadius: 7,
                             padding: "6px 4px",
-                            color: "#2f6690",
+                            color: "var(--t-primary)",
                             fontSize: 13,
                             fontFamily: "inherit",
                             outline: "none",
@@ -315,19 +315,19 @@ export default function SchedulePage() {
                         </select>
                       </div>
                     </div>
-                    <div style={{ fontSize: 10, color: "#7a9ab5", marginBottom: 12 }}>
+                    <div style={{ fontSize: 10, color: "var(--t-time)", marginBottom: 12 }}>
                       {buildHoursRange(tempWake, tempSleep).length - 1}h shown
                     </div>
                     <div style={{ display: "flex", gap: 8 }}>
                       <button
                         onClick={() => setShowSettings(false)}
-                        style={{ flex: 1, padding: "7px 0", borderRadius: 7, border: "1.5px solid #c8dfe9", background: "transparent", color: "#5a7a99", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
+                        style={{ flex: 1, padding: "7px 0", borderRadius: 7, border: "1.5px solid var(--t-input-border)", background: "transparent", color: "var(--t-muted)", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
                       >
                         Cancel
                       </button>
                       <button
                         onClick={applySettings}
-                        style={{ flex: 1, padding: "7px 0", borderRadius: 7, border: "none", background: "#2f6690", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
+                        style={{ flex: 1, padding: "7px 0", borderRadius: 7, border: "none", background: "var(--t-primary)", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
                       >
                         Apply
                       </button>
@@ -396,18 +396,18 @@ export default function SchedulePage() {
             position: "fixed",
             top: contextMenu.y,
             left: contextMenu.x,
-            background: "#f4f9fc",
+            background: "var(--t-panel)",
             borderRadius: 10,
             padding: 4,
-            boxShadow: "0 8px 24px rgba(47,102,144,0.2)",
-            border: "1.5px solid #c8dfe9",
+            boxShadow: "0 8px 24px var(--t-p20)",
+            border: "1.5px solid var(--t-input-border)",
             zIndex: 1000,
             minWidth: 150,
           }}
         >
           {(["completed", "skipped", null] as const).map((s) => {
             const label = s === null ? "Clear Status" : s.charAt(0).toUpperCase() + s.slice(1)
-            const color = s === "completed" ? "#166534" : s === "skipped" ? "#c0392b" : "#5a7a99"
+            const color = s === "completed" ? "#166534" : s === "skipped" ? "#c0392b" : "var(--t-muted)"
             return (
               <div
                 key={String(s)}
@@ -424,7 +424,7 @@ export default function SchedulePage() {
                   fontWeight: 500,
                   transition: "background 0.12s",
                 }}
-                onMouseEnter={(e) => ((e.currentTarget as HTMLDivElement).style.background = "rgba(47,102,144,0.06)")}
+                onMouseEnter={(e) => ((e.currentTarget as HTMLDivElement).style.background = "var(--t-p06)")}
                 onMouseLeave={(e) => ((e.currentTarget as HTMLDivElement).style.background = "transparent")}
               >
                 {label}
@@ -443,7 +443,7 @@ export default function SchedulePage() {
               borderRadius: 6,
               color: "#c0392b",
               fontWeight: 500,
-              borderTop: "1px solid #d8eaf3",
+              borderTop: "1px solid var(--t-border)",
               marginTop: 2,
             }}
             onMouseEnter={(e) => ((e.currentTarget as HTMLDivElement).style.background = "rgba(192,57,43,0.08)")}
