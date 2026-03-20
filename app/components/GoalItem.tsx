@@ -18,9 +18,13 @@ type Props = {
   allComplete: boolean
   onDelete: (id: string) => void
   onUpdate: (updated: Goal) => void
+  onDragStart?: (id: string) => void
+  onDragEnter?: (id: string) => void
+  onDragEnd?: () => void
+  isDragging?: boolean
 }
 
-export default function GoalItem({ goal, allComplete, onDelete, onUpdate }: Props) {
+export default function GoalItem({ goal, allComplete, onDelete, onUpdate, onDragStart, onDragEnter, onDragEnd, isDragging }: Props) {
   const [title, setTitle] = useState(goal.title)
   const [current, setCurrent] = useState(goal.current_value)
   const [target, setTarget] = useState(goal.target_value)
@@ -70,8 +74,36 @@ export default function GoalItem({ goal, allComplete, onDelete, onUpdate }: Prop
   }
 
   return (
-    <div style={cardStyle} className="goal-card">
+    <div
+      style={{ ...cardStyle, opacity: isDragging ? 0.4 : 1 }}
+      className="goal-card"
+      draggable
+      onDragStart={(e) => { e.stopPropagation(); onDragStart?.(goal.id) }}
+      onDragEnter={(e) => { e.stopPropagation(); onDragEnter?.(goal.id) }}
+      onDragEnd={(e) => { e.stopPropagation(); onDragEnd?.() }}
+    >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+        {/* Drag handle */}
+        <div
+          style={{
+            marginRight: 8,
+            color: "var(--t-icon)",
+            cursor: "grab",
+            display: "flex",
+            alignItems: "center",
+            flexShrink: 0,
+            opacity: 0.5,
+          }}
+        >
+          <svg width="10" height="16" viewBox="0 0 10 16" fill="var(--t-icon)">
+            <circle cx="2" cy="2" r="1.5" />
+            <circle cx="8" cy="2" r="1.5" />
+            <circle cx="2" cy="8" r="1.5" />
+            <circle cx="8" cy="8" r="1.5" />
+            <circle cx="2" cy="14" r="1.5" />
+            <circle cx="8" cy="14" r="1.5" />
+          </svg>
+        </div>
         <input
           value={title}
           onChange={(e) => {

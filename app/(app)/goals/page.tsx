@@ -10,6 +10,8 @@ export default function GoalsPage() {
   const [goalSets, setGoalSets] = useState<GoalSetType[]>([])
   const [loading, setLoading] = useState(true)
   const initialized = useRef(false)
+  const [draggingSetId, setDraggingSetId] = useState<string | null>(null)
+  const [dropSetIndex, setDropSetIndex] = useState<number | null>(null)
 
   useEffect(() => {
     if (initialized.current) return
@@ -69,6 +71,46 @@ export default function GoalsPage() {
 
   function handleSetUpdate(updated: GoalSetType) {
     setGoalSets((prev) => prev.map((s) => (s.id === updated.id ? updated : s)))
+  }
+
+  function handleSetDragStart(setId: string) {
+    setDraggingSetId(setId)
+    const index = goalSets.findIndex((s) => s.id === setId)
+    if (index !== -1) setDropSetIndex(index)
+  }
+
+  function handleSetDragEnter(setId: string) {
+    if (!draggingSetId) return
+    const index = goalSets.findIndex((s) => s.id === setId)
+    if (index !== -1) setDropSetIndex(index)
+  }
+
+  async function commitSetReorder() {
+    if (!draggingSetId || dropSetIndex === null) {
+      setDraggingSetId(null)
+      setDropSetIndex(null)
+      return
+    }
+    const fromIndex = goalSets.findIndex((s) => s.id === draggingSetId)
+    if (fromIndex === -1 || fromIndex === dropSetIndex) {
+      setDraggingSetId(null)
+      setDropSetIndex(null)
+      return
+    }
+    const updated = [...goalSets]
+    const [moved] = updated.splice(fromIndex, 1)
+    updated.splice(dropSetIndex, 0, moved)
+    setGoalSets(updated)
+    setDraggingSetId(null)
+    setDropSetIndex(null)
+    try {
+      for (let i = 0; i < updated.length; i++) {
+        // eslint-disable-next-line no-await-in-loop
+        await supabase.from("goal_sets").update({ sort_order: i }).eq("id", updated[i].id)
+      }
+    } catch {
+      // ignore
+    }
   }
 
   if (loading) return null
@@ -133,15 +175,31 @@ export default function GoalsPage() {
           </div>
         ) : (
           <>
-            {goalSets.map((set) => (
-              <GoalSet
-                key={set.id}
-                goalSet={set}
-                userId={user.id}
-                onDelete={handleSetDelete}
-                onUpdate={handleSetUpdate}
-              />
-            ))}
+            <div
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => { e.preventDefault(); void commitSetReorder() }}
+            >
+              {goalSets.map((set, index) => (
+                <div key={set.id}>
+                  {draggingSetId && dropSetIndex === index && (
+                    <div style={{ height: 3, borderRadius: 999, background: "var(--t-p60)", margin: "0 0 16px" }} />
+                  )}
+                  <GoalSet
+                    goalSet={set}
+                    userId={user.id}
+                    onDelete={handleSetDelete}
+                    onUpdate={handleSetUpdate}
+                    onDragStart={handleSetDragStart}
+                    onDragEnter={handleSetDragEnter}
+                    onDragEnd={() => void commitSetReorder()}
+                    isDragging={draggingSetId === set.id}
+                  />
+                </div>
+              ))}
+              {draggingSetId && dropSetIndex === goalSets.length && (
+                <div style={{ height: 3, borderRadius: 999, background: "var(--t-p60)", margin: "0 0 8px" }} />
+              )}
+            </div>
 
             <div style={{ display: "flex", justifyContent: "center", marginTop: 16 }}>
               <button

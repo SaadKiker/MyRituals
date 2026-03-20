@@ -18,6 +18,10 @@ type Props = {
   userId: string
   onDelete: (id: string) => void
   onUpdate: (updated: GoalSetType) => void
+  onDragStart?: (id: string) => void
+  onDragEnter?: (id: string) => void
+  onDragEnd?: () => void
+  isDragging?: boolean
 }
 
 function getDaysLeft(dateStr: string | null): number | null {
@@ -30,10 +34,12 @@ function getDaysLeft(dateStr: string | null): number | null {
   return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
 }
 
-export default function GoalSet({ goalSet, userId, onDelete, onUpdate }: Props) {
+export default function GoalSet({ goalSet, userId, onDelete, onUpdate, onDragStart, onDragEnter, onDragEnd, isDragging }: Props) {
   const [title, setTitle] = useState(goalSet.title)
   const titleTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const dateInputRef = useRef<HTMLInputElement>(null)
+  const [draggingGoalId, setDraggingGoalId] = useState<string | null>(null)
+  const [dropGoalIndex, setDropGoalIndex] = useState<number | null>(null)
 
   function openDatePicker() {
     if (!dateInputRef.current) return
@@ -90,6 +96,46 @@ export default function GoalSet({ goalSet, userId, onDelete, onUpdate }: Props) 
     onUpdate({ ...goalSet, goals: goalSet.goals.map((g) => (g.id === updated.id ? updated : g)) })
   }
 
+  function handleGoalDragStart(goalId: string) {
+    setDraggingGoalId(goalId)
+    const index = goalSet.goals.findIndex((g) => g.id === goalId)
+    if (index !== -1) setDropGoalIndex(index)
+  }
+
+  function handleGoalDragEnter(goalId: string) {
+    if (!draggingGoalId) return
+    const index = goalSet.goals.findIndex((g) => g.id === goalId)
+    if (index !== -1) setDropGoalIndex(index)
+  }
+
+  async function commitGoalReorder() {
+    if (!draggingGoalId || dropGoalIndex === null) {
+      setDraggingGoalId(null)
+      setDropGoalIndex(null)
+      return
+    }
+    const fromIndex = goalSet.goals.findIndex((g) => g.id === draggingGoalId)
+    if (fromIndex === -1 || fromIndex === dropGoalIndex) {
+      setDraggingGoalId(null)
+      setDropGoalIndex(null)
+      return
+    }
+    const updated = [...goalSet.goals]
+    const [moved] = updated.splice(fromIndex, 1)
+    updated.splice(dropGoalIndex, 0, moved)
+    onUpdate({ ...goalSet, goals: updated })
+    setDraggingGoalId(null)
+    setDropGoalIndex(null)
+    try {
+      for (let i = 0; i < updated.length; i++) {
+        // eslint-disable-next-line no-await-in-loop
+        await supabase.from("goals").update({ sort_order: i }).eq("id", updated[i].id)
+      }
+    } catch {
+      // ignore
+    }
+  }
+
   async function handleDeleteSet() {
     onDelete(goalSet.id)
     await supabase.from("goal_sets").delete().eq("id", goalSet.id)
@@ -104,10 +150,36 @@ export default function GoalSet({ goalSet, userId, onDelete, onUpdate }: Props) 
         marginBottom: 48,
         paddingBottom: 32,
         borderBottom: "1px solid var(--t-p08)",
+        opacity: isDragging ? 0.4 : 1,
+        transition: "opacity 0.2s",
       }}
+      draggable
+      onDragStart={(e) => { e.stopPropagation(); onDragStart?.(goalSet.id) }}
+      onDragEnter={(e) => { e.stopPropagation(); onDragEnter?.(goalSet.id) }}
+      onDragEnd={(e) => { e.stopPropagation(); onDragEnd?.() }}
     >
       {/* Set Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+        {/* Set drag handle */}
+        <div
+          style={{
+            marginRight: 10,
+            cursor: "grab",
+            display: "flex",
+            alignItems: "center",
+            flexShrink: 0,
+            opacity: 0.6,
+          }}
+        >
+          <svg width="10" height="16" viewBox="0 0 10 16" fill="var(--t-muted)">
+            <circle cx="2" cy="2" r="1.5" />
+            <circle cx="8" cy="2" r="1.5" />
+            <circle cx="2" cy="8" r="1.5" />
+            <circle cx="8" cy="8" r="1.5" />
+            <circle cx="2" cy="14" r="1.5" />
+            <circle cx="8" cy="14" r="1.5" />
+          </svg>
+        </div>
         <input
           value={title}
           onChange={(e) => {
@@ -177,7 +249,7 @@ export default function GoalSet({ goalSet, userId, onDelete, onUpdate }: Props) 
             style={{
               background: "transparent",
               border: "none",
-              color: "var(--t-icon)",
+              color: "var(--t-muted)",
               fontSize: 22,
               cursor: "pointer",
               padding: "2px 4px",
@@ -191,16 +263,30 @@ export default function GoalSet({ goalSet, userId, onDelete, onUpdate }: Props) 
       </div>
 
       {/* Goals List */}
-      <div>
-        {goalSet.goals.map((g) => (
-          <GoalItem
-            key={g.id}
-            goal={g}
-            allComplete={allComplete}
-            onDelete={handleGoalDelete}
-            onUpdate={handleGoalUpdate}
-          />
+      <div
+        onDragOver={(e) => { e.preventDefault(); e.stopPropagation() }}
+        onDrop={(e) => { e.preventDefault(); e.stopPropagation(); void commitGoalReorder() }}
+      >
+        {goalSet.goals.map((g, index) => (
+          <div key={g.id}>
+            {draggingGoalId && dropGoalIndex === index && (
+              <div style={{ height: 3, borderRadius: 999, background: "var(--t-p60)", margin: "2px 0 6px" }} />
+            )}
+            <GoalItem
+              goal={g}
+              allComplete={allComplete}
+              onDelete={handleGoalDelete}
+              onUpdate={handleGoalUpdate}
+              onDragStart={handleGoalDragStart}
+              onDragEnter={handleGoalDragEnter}
+              onDragEnd={() => void commitGoalReorder()}
+              isDragging={draggingGoalId === g.id}
+            />
+          </div>
         ))}
+        {draggingGoalId && dropGoalIndex === goalSet.goals.length && (
+          <div style={{ height: 3, borderRadius: 999, background: "var(--t-p60)", margin: "4px 0 0" }} />
+        )}
       </div>
 
       {/* Add Goal Button */}
