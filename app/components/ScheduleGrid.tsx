@@ -44,7 +44,7 @@ export default function ScheduleGrid({
     onGridClick(startHours[idx])
   }
 
-  const totalH = hours.length * HOUR_H
+  const totalH = startHours.length * HOUR_H
 
   return (
     <div
@@ -69,7 +69,7 @@ export default function ScheduleGrid({
           flexDirection: "column",
         }}
       >
-        {hours.map((h) => (
+        {startHours.map((h) => (
           <div
             key={h}
             style={{
@@ -112,7 +112,7 @@ export default function ScheduleGrid({
               flexDirection: "column",
             }}
           >
-            {hours.map((h, i) => (
+            {startHours.map((h, i) => (
               <div
                 key={h}
                 style={{
