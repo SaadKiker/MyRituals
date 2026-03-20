@@ -1,5 +1,7 @@
 "use client"
 
+import { useRef } from "react"
+
 export type ScheduleEventType = {
   id: string
   user_id: string
@@ -83,14 +85,39 @@ export default function ScheduleEvent({ event, entry, allComplete, calHours, onE
     borderLeft = "3px solid rgba(255,69,58,0.9)"
   }
 
+  // Long-press for mobile context menu
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const longPressFired = useRef(false)
+
+  function handleTouchStart(e: React.TouchEvent) {
+    longPressFired.current = false
+    const touch = e.touches[0]
+    longPressTimer.current = setTimeout(() => {
+      longPressFired.current = true
+      onContextMenu(event, touch.clientX, touch.clientY)
+    }, 500)
+  }
+
+  function handleTouchEnd() {
+    if (longPressTimer.current) clearTimeout(longPressTimer.current)
+  }
+
+  function handleClick() {
+    if (longPressFired.current) { longPressFired.current = false; return }
+    onEdit(event)
+  }
+
   return (
     <div
-      onClick={() => onEdit(event)}
+      onClick={handleClick}
       onContextMenu={(e) => {
         e.preventDefault()
         e.stopPropagation()
         onContextMenu(event, e.clientX, e.clientY)
       }}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchMove={handleTouchEnd}
       style={{
         position: "absolute",
         left: 8,

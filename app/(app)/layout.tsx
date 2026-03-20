@@ -85,16 +85,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </button>
 
         {/* Tab Bar */}
-        <div style={{ display: "flex", justifyContent: "center", padding: "52px 24px 0" }}>
-          <div style={{ background: "var(--t-p10)", borderRadius: 12, padding: 4, display: "flex", gap: 2 }}>
+        <div className="app-tab-wrapper">
+          <div className="app-tabs">
             {TABS.map(({ label, href }) => {
               const active = pathname === href
               return (
-                <Link key={label} href={href} style={{
-                  padding: "10px 26px", borderRadius: 8,
+                <Link key={label} href={href} className="app-tab" style={{
                   background: active ? "var(--t-p15)" : "transparent",
                   color: active ? "var(--t-primary)" : "var(--t-muted)",
-                  fontWeight: 600, fontSize: "1rem", textDecoration: "none",
                   boxShadow: active ? "0 2px 8px var(--t-p10)" : "none",
                   pointerEvents: "auto", opacity: 1,
                 }}>

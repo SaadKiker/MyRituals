@@ -207,18 +207,11 @@ export default function SchedulePage() {
   return (
     <>
       <div style={{ maxWidth: 760, margin: "32px auto 0", padding: "0 20px" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 16,
-          }}
-        >
-          <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--t-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+        <div className="schedule-header">
+          <span className="schedule-header-date" style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--t-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
             {dateLabel}
           </span>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, position: "relative" }}>
+          <div className="schedule-header-controls" style={{ display: "flex", alignItems: "center", gap: 8, position: "relative" }}>
             {/* Sleep Hours Button */}
             <div style={{ position: "relative" }}>
               <button

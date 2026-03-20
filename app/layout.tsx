@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Rubik } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -9,8 +9,14 @@ const rubik = Rubik({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://myrituals.app"),
   title: "MyRituals",
   description: "Build habits, schedule your day, reach your goals",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({

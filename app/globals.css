@@ -66,3 +66,77 @@ html, body {
   color: var(--foreground);
   font-family: var(--font-rubik), sans-serif;
 }
+
+/* ── Mobile: always show delete buttons on touch devices ── */
+@media (hover: none) {
+  .habit-del-btn,
+  .goal-delete-btn {
+    opacity: 1 !important;
+  }
+}
+
+/* ── Prevent iOS auto-zoom on focused inputs ── */
+@media (max-width: 768px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* ── Tab bar: fill width on small screens ── */
+.app-tab-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 52px 16px 0;
+}
+.app-tabs {
+  background: var(--t-p10);
+  border-radius: 12px;
+  padding: 4px;
+  display: flex;
+  gap: 2px;
+}
+.app-tab {
+  padding: 10px 26px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+@media (max-width: 480px) {
+  .app-tab-wrapper {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .app-tabs {
+    width: 100%;
+  }
+  .app-tab {
+    flex: 1;
+    text-align: center;
+    padding: 10px 8px;
+  }
+}
+
+/* ── Schedule header: stack on small screens ── */
+.schedule-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  gap: 8px;
+}
+@media (max-width: 480px) {
+  .schedule-header {
+    flex-wrap: wrap;
+  }
+  .schedule-header-date {
+    width: 100%;
+  }
+  .schedule-header-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

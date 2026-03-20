@@ -161,15 +161,16 @@ export default function GoalItem({ goal, allComplete, onDelete, onUpdate, onDrag
         <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
           <input
             type="number"
+            inputMode="numeric"
             value={current}
             onChange={(e) => setCurrent(parseFloat(e.target.value) || 0)}
             onBlur={() => saveValues(current, target)}
             style={{
-              width: 58,
+              width: 64,
               background: "transparent",
               border: "1px solid var(--t-input-border)",
               borderRadius: 6,
-              padding: "3px 6px",
+              padding: "5px 6px",
               fontSize: "0.85rem",
               textAlign: "center",
               color: "var(--t-primary)",
@@ -180,15 +181,16 @@ export default function GoalItem({ goal, allComplete, onDelete, onUpdate, onDrag
           <span style={{ color: "#99b8cc" }}>/</span>
           <input
             type="number"
+            inputMode="numeric"
             value={target}
             onChange={(e) => setTarget(parseFloat(e.target.value) || 0)}
             onBlur={() => saveValues(current, target)}
             style={{
-              width: 58,
+              width: 64,
               background: "transparent",
               border: "1px solid var(--t-input-border)",
               borderRadius: 6,
-              padding: "3px 6px",
+              padding: "5px 6px",
               fontSize: "0.85rem",
               textAlign: "center",
               color: "var(--t-primary)",
