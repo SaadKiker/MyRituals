@@ -13,7 +13,7 @@ import {
   type DragOverEvent,
   type DragStartEvent,
 } from "@dnd-kit/core"
-import { SortableContext, arrayMove, rectSortingStrategy, useSortable } from "@dnd-kit/sortable"
+import { SortableContext, arrayMove, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable"
 import { supabase } from "../../lib/supabase"
 import type { GoalSetType } from "../../components/GoalSet"
 import { COLORS, resolveColor, spaceCardBackground } from "../../components/ScheduleEvent"
@@ -40,70 +40,32 @@ function SpaceDragGhost({ space }: { space: GoalSetType }) {
   return (
     <div
       style={{
-        textAlign: "left",
+        textAlign: "center",
         minHeight: 120,
         width: "100%",
-        maxWidth: 320,
-        borderRadius: 14,
+        borderRadius: 20,
         border: "1.5px solid var(--t-border)",
         background: spaceCardBackground(space.card_color),
-        boxShadow: "0 16px 36px var(--t-p18), 0 4px 12px var(--t-p10)",
-        padding: "16px",
+        boxShadow: "0 24px 48px var(--t-p20), 0 8px 16px var(--t-p10)",
+        padding: "24px",
         cursor: "grabbing",
         display: "flex",
         flexDirection: "column",
-        justifyContent: "space-between",
+        alignItems: "center",
+        justifyContent: "center",
         fontFamily: "inherit",
         position: "relative",
         opacity: 0.96,
         transform: "rotate(1deg)",
+        boxSizing: "border-box"
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 8, paddingBottom: 22 }}>
-        <div
-          aria-hidden
-          style={{
-            color: "var(--t-icon)",
-            opacity: 0.7,
-            display: "flex",
-            alignItems: "center",
-            flexShrink: 0,
-          }}
-        >
-          <svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor">
-            <circle cx="2" cy="2" r="1.5" />
-            <circle cx="8" cy="2" r="1.5" />
-            <circle cx="2" cy="8" r="1.5" />
-            <circle cx="8" cy="8" r="1.5" />
-            <circle cx="2" cy="14" r="1.5" />
-            <circle cx="8" cy="14" r="1.5" />
-          </svg>
-        </div>
-        <span
-          style={{
-            fontSize: "1rem",
-            fontWeight: 700,
-            color: "var(--t-muted)",
-            lineHeight: 1.35,
-          }}
-        >
-          {space.title || "Untitled Space"}
-        </span>
+      <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "var(--t-muted)", lineHeight: 1.35, width: "100%", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        {space.title || "Untitled Space"}
       </div>
-      <span
-        style={{
-          position: "absolute",
-          bottom: 16,
-          right: 16,
-          fontSize: "0.82rem",
-          color: "var(--t-muted)",
-          fontWeight: 600,
-          textAlign: "right",
-          lineHeight: 1.2,
-        }}
-      >
+      <div style={{ marginTop: 6, fontSize: "0.95rem", color: "var(--t-muted)", fontWeight: 500, lineHeight: 1.2 }}>
         {label}
-      </span>
+      </div>
     </div>
   )
 }
@@ -127,27 +89,27 @@ export default function GoalsPage() {
   useEffect(() => {
     if (initialized.current) return
     initialized.current = true
-    ;(async () => {
-      const { data: sets } = await supabase
-        .from("goal_sets")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("sort_order", { ascending: true })
+      ; (async () => {
+        const { data: sets } = await supabase
+          .from("goal_sets")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("sort_order", { ascending: true })
 
-      const { data: goals } = await supabase
-        .from("goals")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("sort_order", { ascending: true })
+        const { data: goals } = await supabase
+          .from("goals")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("sort_order", { ascending: true })
 
-      const combined: GoalSetType[] = (sets ?? []).map((s) => ({
-        ...s,
-        goals: (goals ?? []).filter((g) => g.goal_set_id === s.id),
-      }))
+        const combined: GoalSetType[] = (sets ?? []).map((s) => ({
+          ...s,
+          goals: (goals ?? []).filter((g) => g.goal_set_id === s.id),
+        }))
 
-      setSpaces(combined)
-      setLoading(false)
-    })()
+        setSpaces(combined)
+        setLoading(false)
+      })()
   }, [user.id])
 
   useEffect(() => {
@@ -264,7 +226,7 @@ export default function GoalsPage() {
   return (
     <div
       style={{
-        maxWidth: 980,
+        maxWidth: 640,
         margin: "90px auto 0",
         padding: "0 20px 20px",
       }}
@@ -282,317 +244,297 @@ export default function GoalsPage() {
         }}
         onDragEnd={(e) => void handleDragEnd(e)}
       >
-      <SortableContext items={visibleSpaces.map((s) => s.id)} strategy={rectSortingStrategy}>
+        <SortableContext items={visibleSpaces.map((s) => s.id)} strategy={verticalListSortingStrategy}>
           <div
-        className="spaces-grid-responsive"
-        style={{
-          display: "grid",
-          gap: 16,
-        }}
-      >
-        {visibleSpaces.map((space) => {
-          const daysLeft = getDaysLeft(space.target_date)
-          const showPlaceholder = activeSpaceId !== null && overSpaceId === space.id
-          const label =
-            daysLeft === null
-              ? "Set deadline"
-              : daysLeft === 1
-                ? "1 day left"
-                : `${daysLeft} days left`
-          return (
-            <div key={space.id} style={{ display: "contents" }}>
-              {showPlaceholder && (
-                <div
-                  className="space-drop-placeholder"
-                  style={{
-                    minHeight: 120,
-                    borderRadius: 14,
-                    border: "2px dashed var(--t-p30)",
-                    background: "var(--t-p05)",
-                  }}
-                />
-              )}
-              <SortableSpaceCard
-                id={space.id}
-                onClick={() => {
-                  if (movedDuringDrag.current || editingTitleId === space.id || editingDateId === space.id) return
-                  router.push(`/goals/${space.id}`)
-                }}
-              >
-              <div
-                className="space-card"
-                onContextMenu={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  setColorMenu({ spaceId: space.id, x: e.clientX, y: e.clientY })
-                }}
-                style={{
-                  textAlign: "left",
-                  minHeight: 120,
-                  borderRadius: 14,
-                  border: "1.5px solid var(--t-border)",
-                  background: spaceCardBackground(space.card_color),
-                  boxShadow: "0 8px 20px var(--t-p08)",
-                  padding: "16px",
-                  cursor: "pointer",
-                  display: "block",
-                  opacity: 1,
-                  transform: "scale(1)",
-                  transition: "box-shadow 0.2s, border-color 0.2s, background 0.2s",
-                  fontFamily: "inherit",
-                  position: "relative",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    paddingBottom: 22,
-                    minWidth: 0,
-                  }}
-                >
-                  <div
-                    aria-hidden
-                    style={{
-                      color: "var(--t-icon)",
-                      opacity: 0.7,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0,
-                    }}
-                  >
-                    <svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor">
-                      <circle cx="2" cy="2" r="1.5" />
-                      <circle cx="8" cy="2" r="1.5" />
-                      <circle cx="2" cy="8" r="1.5" />
-                      <circle cx="8" cy="8" r="1.5" />
-                      <circle cx="2" cy="14" r="1.5" />
-                      <circle cx="8" cy="14" r="1.5" />
-                    </svg>
-                  </div>
-                  {editingTitleId === space.id ? (
-                    <input
-                      value={titleDraft}
-                      onChange={(e) => setTitleDraft(e.target.value)}
-                      onClick={(e) => e.stopPropagation()}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      onBlur={() => void saveTitle(space.id)}
-                      onKeyDown={(e) => {
-                        e.stopPropagation()
-                        if (e.key === "Enter") {
-                          e.preventDefault()
-                          void saveTitle(space.id)
-                        }
-                        if (e.key === "Escape") {
-                          setEditingTitleId(null)
-                        }
-                      }}
-                      autoFocus
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 20,
+            }}
+          >
+            {visibleSpaces.map((space) => {
+              const daysLeft = getDaysLeft(space.target_date)
+              const showPlaceholder = activeSpaceId !== null && overSpaceId === space.id
+              const label =
+                daysLeft === null
+                  ? "Set deadline"
+                  : daysLeft === 1
+                    ? "1 day left"
+                    : `${daysLeft} days left`
+              return (
+                <div key={space.id} style={{ display: "contents" }}>
+                  {showPlaceholder && (
+                    <div
+                      className="space-drop-placeholder"
                       style={{
-                        fontSize: "1rem",
-                        fontWeight: 700,
-                        color: "var(--t-primary)",
-                        lineHeight: 1.35,
-                        border: "1px solid var(--t-input-border)",
-                        borderRadius: 8,
-                        paddingLeft: 8,
-                        paddingTop: 4,
-                        paddingBottom: 4,
-                        background: "#fff",
-                        outline: "none",
-                        fontFamily: "inherit",
-                        flex: 1,
-                        minWidth: 0,
+                        minHeight: 120,
+                        borderRadius: 20,
+                        border: "2px dashed var(--t-p30)",
+                        background: "var(--t-p05)",
                       }}
                     />
-                  ) : (
-                    <span
-                      className="space-title"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setEditingTitleId(space.id)
-                        setTitleDraft(space.title || "")
-                      }}
-                      style={{
-                        fontSize: "1rem",
-                        fontWeight: 700,
-                        color: "var(--t-muted)",
-                        lineHeight: 1.35,
-                        flex: 1,
-                        minWidth: 0,
-                        transition: "color 0.18s ease",
-                      }}
-                    >
-                      {space.title || "Untitled Space"}
-                    </span>
                   )}
-                  <button
-                    className="space-delete-btn"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      e.stopPropagation()
-                      setDeleteConfirmSpaceId(space.id)
-                    }}
-                    onMouseDown={(e) => e.stopPropagation()}
-                    style={{
-                      flexShrink: 0,
-                      width: 28,
-                      height: 28,
-                      borderRadius: 8,
-                      border: "1px solid transparent",
-                      background: "transparent",
-                      color: "var(--t-muted)",
-                      cursor: "pointer",
-                      fontSize: 14,
-                      lineHeight: 1,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      opacity: 0.38,
-                      transition: "opacity 0.2s, color 0.2s",
-                    }}
-                    title="Delete Space"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="3 6 5 6 21 6" />
-                      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                      <path d="M10 11v6M14 11v6" />
-                      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                    </svg>
-                  </button>
-                </div>
-                <div
-                  style={{
-                    position: "absolute",
-                    bottom: 16,
-                    right: 16,
-                    zIndex: 5,
-                    textAlign: "right",
-                  }}
-                >
-                  <span
-                    className="space-date-label"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setEditingDateId(space.id)
-                      setDateDraft(space.target_date ? space.target_date.split("T")[0] : "")
-                    }}
-                    style={{
-                      fontSize: "0.82rem",
-                      color: "var(--t-muted)",
-                      fontWeight: 600,
-                      transition: "color 0.18s ease",
-                      display: "inline-block",
-                      lineHeight: 1.2,
+                  <SortableSpaceCard
+                    id={space.id}
+                    onClick={() => {
+                      if (movedDuringDrag.current || editingTitleId === space.id || editingDateId === space.id) return
+                      router.push(`/goals/${space.id}`)
                     }}
                   >
-                    {label}
-                  </span>
-                  {editingDateId === space.id && (
                     <div
-                      onClick={(e) => e.stopPropagation()}
-                      onMouseDown={(e) => e.stopPropagation()}
+                      className="space-card"
+                      onContextMenu={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        setColorMenu({ spaceId: space.id, x: e.clientX, y: e.clientY })
+                      }}
                       style={{
-                        position: "absolute",
-                        bottom: "100%",
-                        right: 0,
-                        marginBottom: 6,
-                        zIndex: 25,
-                        padding: 8,
-                        borderRadius: 10,
-                        border: "1px solid var(--t-border)",
-                        background: "#fff",
-                        boxShadow: "0 8px 20px var(--t-p12)",
+                        textAlign: "center",
+                        minHeight: 120,
+                        borderRadius: 20,
+                        border: "1.5px solid var(--t-border)",
+                        background: spaceCardBackground(space.card_color),
+                        boxShadow: "0 8px 20px var(--t-p08)",
+                        padding: "24px",
+                        cursor: "pointer",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        opacity: 1,
+                        transform: "scale(1)",
+                        transition: "box-shadow 0.2s, border-color 0.2s, background 0.2s",
+                        fontFamily: "inherit",
+                        position: "relative",
+                        boxSizing: "border-box"
                       }}
                     >
-                      <input
-                        type="date"
-                        value={dateDraft}
-                        onChange={(e) => {
-                          const val = e.target.value
-                          setDateDraft(val)
-                          setSpaces((prev) => prev.map((s) => (s.id === space.id ? { ...s, target_date: val || null } : s)))
-                          void supabase.from("goal_sets").update({ target_date: val || null }).eq("id", space.id)
-                          setEditingDateId(null)
-                        }}
-                        autoFocus
-                        style={{
-                          border: "1px solid var(--t-input-border)",
-                          borderRadius: 8,
-                          padding: "6px 8px",
-                          fontFamily: "inherit",
-                          color: "var(--t-primary)",
-                          fontSize: "0.82rem",
-                          outline: "none",
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-              </SortableSpaceCard>
-            </div>
-          )
-        })}
-        {activeSpaceId && overSpaceId === "__add_space__" && (
-          <div
-            className="space-drop-placeholder"
-            style={{
-              minHeight: 120,
-              borderRadius: 14,
-              border: "2px dashed var(--t-p30)",
-              background: "var(--t-p05)",
-            }}
-          />
-        )}
+                      {editingTitleId === space.id ? (
+                        <input
+                          value={titleDraft}
+                          onChange={(e) => setTitleDraft(e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          onBlur={() => void saveTitle(space.id)}
+                          onKeyDown={(e) => {
+                            e.stopPropagation()
+                            if (e.key === "Enter") {
+                              e.preventDefault()
+                              void saveTitle(space.id)
+                            }
+                            if (e.key === "Escape") {
+                              setEditingTitleId(null)
+                            }
+                          }}
+                          autoFocus
+                          style={{
+                            fontSize: "1.75rem",
+                            fontWeight: 800,
+                            color: "var(--t-primary)",
+                            lineHeight: 1.35,
+                            border: "1px solid var(--t-input-border)",
+                            borderRadius: 8,
+                            padding: "4px 8px",
+                            background: "#fff",
+                            outline: "none",
+                            fontFamily: "inherit",
+                            width: "100%",
+                            textAlign: "center",
+                            boxSizing: "border-box"
+                          }}
+                        />
+                      ) : (
+                        <div
+                          className="space-title"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setEditingTitleId(space.id)
+                            setTitleDraft(space.title || "")
+                          }}
+                          style={{
+                            fontSize: "1.75rem",
+                            fontWeight: 800,
+                            color: "var(--t-muted)",
+                            lineHeight: 1.35,
+                            maxWidth: "100%",
+                            transition: "color 0.18s ease",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis"
+                          }}
+                        >
+                          {space.title || "Untitled Space"}
+                        </div>
+                      )}
+                      
+                      <div style={{ marginTop: 6, position: "relative", display: "flex", justifyContent: "center" }}>
+                        <span
+                          className="space-date-label"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setEditingDateId(space.id)
+                            setDateDraft(space.target_date ? space.target_date.split("T")[0] : "")
+                          }}
+                          style={{
+                            fontSize: "0.95rem",
+                            color: "var(--t-muted)",
+                            fontWeight: 500,
+                            transition: "color 0.18s ease",
+                            display: "inline-block",
+                            lineHeight: 1.2,
+                          }}
+                        >
+                          {label}
+                        </span>
+                        {editingDateId === space.id && (
+                          <div
+                            onClick={(e) => e.stopPropagation()}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            style={{
+                              position: "absolute",
+                              top: "100%",
+                              left: "50%",
+                              transform: "translateX(-50%)",
+                              marginTop: 6,
+                              zIndex: 25,
+                              padding: 8,
+                              borderRadius: 10,
+                              border: "1px solid var(--t-border)",
+                              background: "#fff",
+                              boxShadow: "0 8px 20px var(--t-p12)",
+                            }}
+                          >
+                            <input
+                              type="date"
+                              value={dateDraft}
+                              onChange={async (e) => {
+                                const val = e.target.value
+                                setDateDraft(val)
+                                setSpaces((prev) => prev.map((s) => (s.id === space.id ? { ...s, target_date: val || null } : s)))
+                                await supabase.from("goal_sets").update({ target_date: val || null }).eq("id", space.id)
+                              }}
+                              onBlur={() => setEditingDateId(null)}
+                              onKeyDown={(e) => {
+                                e.stopPropagation()
+                                if (e.key === "Enter" || e.key === "Escape") {
+                                  e.preventDefault()
+                                  setEditingDateId(null)
+                                }
+                              }}
+                              autoFocus
+                              style={{
+                                border: "1px solid var(--t-input-border)",
+                                borderRadius: 8,
+                                padding: "6px 8px",
+                                fontFamily: "inherit",
+                                color: "var(--t-primary)",
+                                fontSize: "0.82rem",
+                                outline: "none",
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
 
-        <AddSpaceDropSlot>
-        <button
-          className="add-space-slot"
-          onClick={addSpace}
-          style={{
-            width: "100%",
-            minHeight: 120,
-            boxSizing: "border-box",
-            padding: "16px",
-            borderRadius: 14,
-            border: "none",
-            background: "transparent",
-            color: "var(--t-muted)",
-            fontWeight: 700,
-            fontSize: "0.95rem",
-            cursor: "pointer",
-            fontFamily: "inherit",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            textAlign: "center",
-            transition: "color 0.2s",
-          }}
-          onMouseEnter={(e) => {
-            ;(e.currentTarget as HTMLButtonElement).style.color = "var(--t-primary)"
-          }}
-          onMouseLeave={(e) => {
-            ;(e.currentTarget as HTMLButtonElement).style.color = "var(--t-muted)"
-          }}
-          title="Add Space"
-        >
-          + Add Space
-        </button>
-        </AddSpaceDropSlot>
-      </div>
-      </SortableContext>
-      <DragOverlay dropAnimation={{ duration: 200, easing: "ease" }}>
-        {activeDragSpace ? <SpaceDragGhost space={activeDragSpace} /> : null}
-      </DragOverlay>
+                      <button
+                        className="space-delete-btn"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          setDeleteConfirmSpaceId(space.id)
+                        }}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        style={{
+                          position: "absolute",
+                          top: 16,
+                          right: 16,
+                          width: 28,
+                          height: 28,
+                          borderRadius: 8,
+                          border: "1px solid transparent",
+                          background: "transparent",
+                          color: "var(--t-muted)",
+                          cursor: "pointer",
+                          fontSize: 14,
+                          lineHeight: 1,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          opacity: 0.38,
+                          transition: "opacity 0.2s, color 0.2s",
+                        }}
+                        title="Delete Space"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="3 6 5 6 21 6" />
+                          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                          <path d="M10 11v6M14 11v6" />
+                          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                        </svg>
+                      </button>
+                    </div>
+                  </SortableSpaceCard>
+                </div>
+              )
+            })}
+            {activeSpaceId && overSpaceId === "__add_space__" && (
+              <div
+                className="space-drop-placeholder"
+                style={{
+                  minHeight: 120,
+                  borderRadius: 20,
+                  border: "2px dashed var(--t-p30)",
+                  background: "var(--t-p05)",
+                }}
+              />
+            )}
+
+            <AddSpaceDropSlot>
+              <button
+                className="add-space-slot"
+                onClick={addSpace}
+                style={{
+                  width: "100%",
+                  minHeight: 120,
+                  boxSizing: "border-box",
+                  padding: "24px",
+                  borderRadius: 20,
+                  border: "2px dashed var(--t-p30)",
+                  background: "transparent",
+                  color: "var(--t-muted)",
+                  fontWeight: 700,
+                  fontSize: "1.2rem",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  textAlign: "center",
+                  transition: "color 0.2s, border-color 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  ; (e.currentTarget as HTMLButtonElement).style.color = "var(--t-primary)"
+                  ; (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--t-primary)"
+                }}
+                onMouseLeave={(e) => {
+                  ; (e.currentTarget as HTMLButtonElement).style.color = "var(--t-muted)"
+                  ; (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--t-p30)"
+                }}
+                title="Add Space"
+              >
+                <div style={{ fontSize: "2rem", lineHeight: 1, marginBottom: 4 }}>+</div>
+                <div>Add Space</div>
+              </button>
+            </AddSpaceDropSlot>
+          </div>
+        </SortableContext>
+        <DragOverlay dropAnimation={{ duration: 200, easing: "ease" }}>
+          {activeDragSpace ? <SpaceDragGhost space={activeDragSpace} /> : null}
+        </DragOverlay>
       </DndContext>
 
       <style>{`
-        .spaces-grid-responsive {
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-        }
         .space-card:hover {
           box-shadow: 0 12px 26px var(--t-p12);
         }
@@ -604,13 +546,8 @@ export default function GoalsPage() {
         }
         .space-title:hover,
         .space-date-label:hover {
-          font-weight: 700 !important;
+          font-weight: 800 !important;
           color: var(--t-primary) !important;
-        }
-        @media (max-width: 900px) {
-          .spaces-grid-responsive {
-            grid-template-columns: minmax(0, 1fr);
-          }
         }
       `}</style>
 

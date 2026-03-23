@@ -91,8 +91,17 @@ export default function ScheduleEvent({ event, entry, allComplete, calHours, onE
   let startIdx = hours.indexOf(event.start_hour)
   let endIdx = hours.indexOf(event.end_hour)
   if (startIdx === -1) return null
-  if (endIdx === -1 || endIdx <= startIdx) endIdx = Math.min(startIdx + 1, hours.length - 1)
-  const durSlots = Math.max(1, endIdx - startIdx)
+  if (endIdx === -1) endIdx = startIdx // fallback
+
+  let diffHours = endIdx - startIdx
+  if (diffHours < 0) diffHours += hours.length // handle midnight wrap-around based on array length
+
+  let diffMinutes = diffHours * 60 + event.end_minute - event.start_minute
+  if (diffMinutes <= 0) diffMinutes = 30 // safeguard
+
+  const top = startIdx * HOUR_H + (event.start_minute / 60) * HOUR_H
+  const durHours = diffMinutes / 60
+  const isShort = diffMinutes <= 35 // Anything ~30 mins or less
 
   const status = entry?.status ?? null
   const color = resolveColor(event.color)
@@ -146,12 +155,12 @@ export default function ScheduleEvent({ event, entry, allComplete, calHours, onE
         position: "absolute",
         left: 8,
         right: 8,
-        top: startIdx * HOUR_H,
-        height: durSlots * HOUR_H - 4,
+        top: top,
+        height: durHours * HOUR_H - 2, // 2px margin top/bottom effectively
         background: bg,
         borderRadius: 8,
-        padding: "6px 10px",
-        fontSize: 13,
+        padding: isShort ? "2px 8px" : "6px 10px",
+        fontSize: isShort ? 12 : 13,
         overflow: "hidden",
         cursor: "pointer",
         boxShadow,
@@ -161,26 +170,26 @@ export default function ScheduleEvent({ event, entry, allComplete, calHours, onE
         lineHeight: 1.4,
         display: "flex",
         flexDirection: "row",
-        alignItems: "flex-start",
+        alignItems: isShort ? "center" : "flex-start",
         justifyContent: "space-between",
         gap: 8,
-        minHeight: 36,
         transition: "background 0.2s",
       }}
     >
       <div
         style={{
           fontWeight: 600,
-          fontSize: 13,
+          fontSize: isShort ? 11 : 13,
           flex: 1,
           overflow: "hidden",
-          lineHeight: 1.3,
-          whiteSpace: "pre-line",
+          lineHeight: isShort ? 1.1 : 1.3,
+          whiteSpace: isShort ? "nowrap" : "pre-line",
+          textOverflow: isShort ? "ellipsis" : "clip",
         }}
       >
         {event.title || "Untitled"}
       </div>
-      <div style={{ opacity: 0.85, fontSize: 11, whiteSpace: "nowrap", flexShrink: 0, textAlign: "right" }}>
+      <div style={{ opacity: 0.85, fontSize: isShort ? 10 : 11, whiteSpace: "nowrap", flexShrink: 0, textAlign: "right" }}>
         {pad(event.start_hour)}:{pad(event.start_minute)} – {pad(event.end_hour)}:{pad(event.end_minute)}
       </div>
     </div>

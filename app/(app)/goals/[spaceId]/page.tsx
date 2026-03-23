@@ -19,6 +19,16 @@ function getSpaceLabel(title: string) {
   return title.trim() ? title : "Untitled Space"
 }
 
+function getDaysLeft(dateStr: string | null): number | null {
+  if (!dateStr) return null
+  const parts = dateStr.split("T")[0].split("-").map(Number)
+  const target = new Date(parts[0], parts[1] - 1, parts[2])
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  target.setHours(0, 0, 0, 0)
+  return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+}
+
 export default function SpacePage() {
   const params = useParams<{ spaceId: string }>()
   const router = useRouter()
@@ -96,25 +106,47 @@ export default function SpacePage() {
           padding: "0 20px 20px",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 14 }}>
-          <button
-            onClick={handleBack}
-            style={{
-              border: "none",
-              background: "transparent",
-              padding: 0,
-              margin: 0,
-              color: "var(--t-primary)",
-              fontWeight: 700,
-              fontSize: "0.95rem",
-              cursor: "pointer",
-              fontFamily: "inherit",
-            }}
-          >
-            Goals
-          </button>
-          <span style={{ color: "var(--t-muted)", fontWeight: 600 }}>{">"}</span>
-          <span style={{ color: "var(--t-muted)", fontWeight: 600, fontSize: "0.95rem" }}>{breadcrumbLabel}</span>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <button
+              onClick={handleBack}
+              style={{
+                border: "none",
+                background: "transparent",
+                padding: 0,
+                margin: 0,
+                color: "var(--t-primary)",
+                fontWeight: 700,
+                fontSize: "0.95rem",
+                cursor: "pointer",
+                fontFamily: "inherit",
+              }}
+            >
+              Goals
+            </button>
+            <span style={{ color: "var(--t-muted)", fontWeight: 600 }}>{">"}</span>
+            <span style={{ color: "var(--t-muted)", fontWeight: 600, fontSize: "0.95rem" }}>{breadcrumbLabel}</span>
+          </div>
+          {(() => {
+            const daysLeft = getDaysLeft(space.target_date)
+            if (daysLeft === null) return null
+            const label = daysLeft === 1 ? "1 day left" : `${daysLeft} days left`
+            return (
+              <span
+                style={{
+                  fontSize: "0.85rem",
+                  fontWeight: 600,
+                  color: "var(--t-muted)",
+                  background: "var(--t-p05)",
+                  padding: "4px 10px",
+                  borderRadius: 12,
+                  border: "1px solid var(--t-p10)"
+                }}
+              >
+                {label}
+              </span>
+            )
+          })()}
         </div>
 
         <SpaceGoalsList goalSetId={space.id} userId={user.id} initialGoals={goals} />

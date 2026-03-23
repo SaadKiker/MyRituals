@@ -18,13 +18,11 @@ type Props = {
   allComplete: boolean
   onDelete: (id: string) => void
   onUpdate: (updated: Goal) => void
-  onDragStart?: (id: string) => void
-  onDragEnter?: (id: string) => void
-  onDragEnd?: () => void
-  isDragging?: boolean
+  sortableContainerRef?: (node: HTMLElement | null) => void
+  dragHandleProps?: Record<string, any>
 }
 
-export default function GoalItem({ goal, allComplete, onDelete, onUpdate, onDragStart, onDragEnter, onDragEnd, isDragging }: Props) {
+export default function GoalItem({ goal, allComplete, onDelete, onUpdate, sortableContainerRef, dragHandleProps }: Props) {
   const [title, setTitle] = useState(goal.title)
   const [current, setCurrent] = useState(goal.current_value)
   const [target, setTarget] = useState(goal.target_value)
@@ -75,16 +73,14 @@ export default function GoalItem({ goal, allComplete, onDelete, onUpdate, onDrag
 
   return (
     <div
-      style={{ ...cardStyle, opacity: isDragging ? 0.4 : 1 }}
+      style={cardStyle}
       className="goal-card"
-      draggable
-      onDragStart={(e) => { e.stopPropagation(); onDragStart?.(goal.id) }}
-      onDragEnter={(e) => { e.stopPropagation(); onDragEnter?.(goal.id) }}
-      onDragEnd={(e) => { e.stopPropagation(); onDragEnd?.() }}
+      ref={sortableContainerRef}
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
         {/* Drag handle */}
         <div
+          {...dragHandleProps}
           style={{
             marginRight: 8,
             color: "var(--t-icon)",

@@ -54,7 +54,9 @@ export default function EventEditor({ event, defaultHour, calHours, calStartHour
   function handleSave() {
     const si = hours.indexOf(startH)
     const ei = hours.indexOf(endH)
-    if (si === -1 || ei === -1 || ei <= si) {
+    const startTotalMins = startH * 60 + startM
+    const endTotalMins = endH * 60 + endM
+    if (si === -1 || ei === -1 || endTotalMins <= startTotalMins) {
       setError("End time must be after start time.")
       return
     }
