@@ -279,10 +279,6 @@ export default function GoalSet({ goalSet, userId, onDelete, onUpdate, onDragSta
               allComplete={allComplete}
               onDelete={handleGoalDelete}
               onUpdate={handleGoalUpdate}
-              onDragStart={handleGoalDragStart}
-              onDragEnter={handleGoalDragEnter}
-              onDragEnd={() => void commitGoalReorder()}
-              isDragging={draggingGoalId === g.id}
             />
           </div>
         ))}
