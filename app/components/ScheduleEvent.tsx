@@ -25,28 +25,52 @@ export const CAL_ALL_HOURS = [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 0,
 export const CAL_START_HOURS = [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 0, 1, 2, 3, 4, 5]
 export const HOUR_H = 40
 export const COLORS = [
-  "#e07060",
-  "#4a9070",
-  "#c4880a",
-  "#8060a0",
-  "#d4724a",
-  "#5070a0",
-  "#b04848",
-  "#7a7e5a",
+  "#E07B6A",
+  "#F0A500",
+  "#E8C84A",
+  "#7FAF7A",
+  "#7A9BBF",
+  "#A07898",
+  "#A0724A",
+  "#E8909A",
 ]
 
+/** Legacy hex / CSS vars from the previous palette → same slot in new palette */
+const LEGACY_COLOR_MAP: Record<string, string> = {
+  "var(--cal-col-1)": COLORS[0],
+  "var(--cal-col-2)": COLORS[1],
+  "var(--cal-col-3)": COLORS[2],
+  "var(--cal-col-4)": COLORS[3],
+  "var(--cal-col-5)": COLORS[4],
+  "var(--cal-col-6)": COLORS[5],
+  "var(--cal-col-7)": COLORS[6],
+  "var(--cal-col-8)": COLORS[7],
+  "#e07060": COLORS[0],
+  "#4a9070": COLORS[1],
+  "#c4880a": COLORS[2],
+  "#8060a0": COLORS[3],
+  "#d4724a": COLORS[4],
+  "#5070a0": COLORS[5],
+  "#b04848": COLORS[6],
+  "#7a7e5a": COLORS[7],
+}
+
 export function resolveColor(color: string): string {
-  const map: Record<string, string> = {
-    "var(--cal-col-1)": "#e07060",
-    "var(--cal-col-2)": "#4a9070",
-    "var(--cal-col-3)": "#c4880a",
-    "var(--cal-col-4)": "#8060a0",
-    "var(--cal-col-5)": "#d4724a",
-    "var(--cal-col-6)": "#5070a0",
-    "var(--cal-col-7)": "#b04848",
-    "var(--cal-col-8)": "#7a7e5a",
-  }
-  return map[color] ?? color
+  const key = color.trim()
+  if (LEGACY_COLOR_MAP[key] !== undefined) return LEGACY_COLOR_MAP[key]
+  const lower = key.toLowerCase()
+  if (LEGACY_COLOR_MAP[lower] !== undefined) return LEGACY_COLOR_MAP[lower]
+  return color
+}
+
+/**
+ * Space cards store the same hex as calendar events; on screen we blend with the panel
+ * so the card reads lighter than a solid event block, but not washed out.
+ */
+export function spaceCardBackground(storedEventColor: string | null | undefined): string {
+  if (!storedEventColor) return "var(--t-panel)"
+  const base = resolveColor(storedEventColor)
+  return `color-mix(in srgb, ${base} 40%, var(--t-panel))`
 }
 
 function pad(n: number) {

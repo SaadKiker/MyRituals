@@ -7,23 +7,18 @@ import {
   CAL_START_HOURS,
   resolveColor,
   type ScheduleEventType,
-  type EventEntry,
 } from "./ScheduleEvent"
 
 type Props = {
   event: ScheduleEventType | null
   defaultHour: number
-  entry: EventEntry | undefined
-  userId: string
   calHours?: number[]
   calStartHours?: number[]
   onSave: (data: Omit<ScheduleEventType, "id" | "user_id">, id?: string) => void
-  onDelete: (id: string) => void
-  onSetStatus: (eventId: string, status: "completed" | "skipped" | null) => void
   onClose: () => void
 }
 
-export default function EventEditor({ event, defaultHour, entry, userId, calHours, calStartHours, onSave, onDelete, onSetStatus, onClose }: Props) {
+export default function EventEditor({ event, defaultHour, calHours, calStartHours, onSave, onClose }: Props) {
   const isNew = !event
   const hours = calHours ?? CAL_ALL_HOURS
   const startHours = calStartHours ?? CAL_START_HOURS
@@ -65,8 +60,6 @@ export default function EventEditor({ event, defaultHour, entry, userId, calHour
     }
     onSave({ title: title.trim() || "Untitled", start_hour: startH, start_minute: startM, end_hour: endH, end_minute: endM, color }, event?.id)
   }
-
-  const status = entry?.status ?? null
 
   const inputStyle: React.CSSProperties = {
     width: "100%",
@@ -197,76 +190,12 @@ export default function EventEditor({ event, defaultHour, entry, userId, calHour
           </div>
         </div>
 
-        {/* Status (edit mode only) */}
-        {!isNew && (
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: "block", fontSize: 11, color: "var(--t-muted)", fontWeight: 600, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>Today's Status</label>
-            <div style={{ display: "flex", gap: 8 }}>
-              {(["completed", "skipped", null] as const).map((s) => {
-                const active = status === s
-                let bg = "var(--t-p06)"
-                let borderColor = "var(--t-input-border)"
-                let textColor = "var(--t-muted)"
-                let label = s === null ? "Clear" : s.charAt(0).toUpperCase() + s.slice(1)
-                if (s === "completed") {
-                  bg = active ? "#22c55e" : "rgba(34,197,94,0.12)"
-                  borderColor = active ? "#22c55e" : "rgba(34,197,94,0.4)"
-                  textColor = active ? "#fff" : "#166534"
-                } else if (s === "skipped") {
-                  bg = active ? "#ff453a" : "rgba(255,69,58,0.08)"
-                  borderColor = active ? "#ff453a" : "rgba(255,69,58,0.3)"
-                  textColor = active ? "#fff" : "#c0392b"
-                }
-                return (
-                  <button
-                    key={String(s)}
-                    onClick={() => event && onSetStatus(event.id, s)}
-                    style={{
-                      flex: 1,
-                      padding: "8px 4px",
-                      borderRadius: 8,
-                      border: `2px solid ${borderColor}`,
-                      background: bg,
-                      color: textColor,
-                      fontWeight: 600,
-                      fontSize: 12,
-                      cursor: "pointer",
-                      fontFamily: "inherit",
-                      transition: "all 0.15s",
-                    }}
-                  >
-                    {label}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        )}
-
         {error && <div style={{ color: "#c0392b", fontSize: 12, marginBottom: 10 }}>{error}</div>}
 
-        {/* Actions */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 4 }}>
-          {!isNew && (
-            <button
-              onClick={() => event && onDelete(event.id)}
-              style={{
-                marginRight: "auto",
-                background: "rgba(255,69,58,0.08)",
-                color: "#c0392b",
-                border: "1px solid rgba(255,69,58,0.3)",
-                borderRadius: 8,
-                padding: "8px 12px",
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: "pointer",
-                fontFamily: "inherit",
-              }}
-            >
-              Delete
-            </button>
-          )}
+        {/* Actions — Cancel & Save right-aligned (New + Edit) */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10, marginTop: 4 }}>
           <button
+            type="button"
             onClick={onClose}
             style={{
               background: "transparent",
@@ -281,6 +210,7 @@ export default function EventEditor({ event, defaultHour, entry, userId, calHour
             Cancel
           </button>
           <button
+            type="button"
             onClick={handleSave}
             style={{
               background: "var(--t-primary)",

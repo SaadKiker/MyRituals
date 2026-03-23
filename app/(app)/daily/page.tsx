@@ -51,7 +51,7 @@ export default function DailyPage() {
           opacity: 1 !important;
         }
       `}</style>
-      <div style={{ maxWidth: 760, margin: "32px auto 0", padding: "0 20px" }}>
+      <div style={{ maxWidth: 760, margin: "90px auto 0", padding: "0 20px" }}>
         {habits.length === 0 ? (
           <div style={{ textAlign: "center", color: "var(--t-muted)", marginTop: 60, fontSize: "1rem" }}>
             <p>No habits yet.</p>

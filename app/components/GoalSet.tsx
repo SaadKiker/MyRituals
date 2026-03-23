@@ -10,6 +10,8 @@ export type GoalSetType = {
   title: string
   target_date: string | null
   sort_order: number
+  /** Same palette as schedule events; rendered with a lighter blend on Space cards */
+  card_color?: string | null
   goals: Goal[]
 }
 

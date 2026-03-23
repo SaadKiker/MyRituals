@@ -28,10 +28,10 @@ type Props = {
   onToggle: (habitId: string) => void
   onTitleChange: (habitId: string, title: string) => void
   onDelete: (habitId: string) => void
-  onDragStart: (habitId: string) => void
-  onDragEnter: (habitId: string) => void
-  onDragEnd: () => void
-  isDragging: boolean
+  /** dnd-kit: attach to the outer row */
+  sortableContainerRef?: (node: HTMLElement | null) => void
+  /** dnd-kit: spread onto the drag handle button */
+  dragHandleProps?: React.HTMLAttributes<HTMLButtonElement>
 }
 
 export default function HabitItem({
@@ -43,17 +43,11 @@ export default function HabitItem({
   onToggle,
   onTitleChange,
   onDelete,
-  onDragStart,
-  onDragEnter,
-  onDragEnd,
-  isDragging,
+  sortableContainerRef,
+  dragHandleProps,
 }: Props) {
   const checked = entry?.completed === 1
   const titleTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  function handleDragStart() {
-    onDragStart(habit.id)
-  }
 
   async function handleToggle() {
     onToggle(habit.id)
@@ -84,11 +78,8 @@ export default function HabitItem({
 
   return (
     <div
+      ref={sortableContainerRef as React.Ref<HTMLDivElement> | undefined}
       className={`habit-row${habit.group_end ? " group-end" : ""}`}
-      draggable
-      onDragStart={handleDragStart}
-      onDragEnter={() => onDragEnter(habit.id)}
-      onDragEnd={onDragEnd}
       style={{
         background: checked
           ? allComplete
@@ -125,6 +116,7 @@ export default function HabitItem({
       >
         <button
           type="button"
+          {...(dragHandleProps ?? {})}
           style={{
             background: "transparent",
             border: "none",
@@ -134,7 +126,7 @@ export default function HabitItem({
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            opacity: isDragging ? 0.6 : 1,
+            touchAction: "none",
           }}
           aria-label="Reorder habit"
         >

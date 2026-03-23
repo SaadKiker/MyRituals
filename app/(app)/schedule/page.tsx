@@ -206,7 +206,7 @@ export default function SchedulePage() {
 
   return (
     <>
-      <div style={{ maxWidth: 760, margin: "32px auto 0", padding: "0 20px" }}>
+      <div style={{ maxWidth: 760, margin: "90px auto 0", padding: "0 20px" }}>
         <div className="schedule-header">
           <span className="schedule-header-date" style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--t-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
             {dateLabel}
@@ -451,13 +451,9 @@ export default function SchedulePage() {
         <EventEditor
           event={editor.event}
           defaultHour={editor.defaultHour}
-          entry={editor.event ? entries.find((e) => e.event_id === editor.event!.id) : undefined}
-          userId={user.id}
           calHours={calHours}
           calStartHours={calStartHours}
           onSave={handleSave}
-          onDelete={handleDelete}
-          onSetStatus={handleSetStatus}
           onClose={() => setEditor(null)}
         />
       )}
