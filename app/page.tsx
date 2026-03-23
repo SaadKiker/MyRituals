@@ -148,7 +148,7 @@ function GoalsCard() {
           background: "var(--t-p10)", border: "1px solid var(--t-p18)",
           borderRadius: 7, padding: "3px 8px",
         }}>
-          45 days
+          45 days left
         </span>
       </div>
 
