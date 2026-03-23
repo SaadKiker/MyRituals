@@ -28,6 +28,7 @@ type Props = {
   onToggle: (habitId: string) => void
   onTitleChange: (habitId: string, title: string) => void
   onDelete: (habitId: string) => void
+  onGroupToggle?: (habitId: string) => void
   /** dnd-kit: attach to the outer row */
   sortableContainerRef?: (node: HTMLElement | null) => void
   /** dnd-kit: spread onto the drag handle button */
@@ -43,6 +44,7 @@ export default function HabitItem({
   onToggle,
   onTitleChange,
   onDelete,
+  onGroupToggle,
   sortableContainerRef,
   dragHandleProps,
 }: Props) {
@@ -117,6 +119,10 @@ export default function HabitItem({
         <button
           type="button"
           {...(dragHandleProps ?? {})}
+          onDoubleClick={(e) => {
+            e.stopPropagation()
+            onGroupToggle?.(habit.id)
+          }}
           style={{
             background: "transparent",
             border: "none",

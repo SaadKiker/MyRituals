@@ -168,6 +168,14 @@ export default function HabitList({ habits, entries, userId, today, dateLabel, o
     onHabitsChange(habits.map((h) => (h.id === habitId ? { ...h, title } : h)))
   }
 
+  function handleGroupToggle(habitId: string) {
+    const habit = habits.find((h) => h.id === habitId)
+    if (!habit) return
+    const toggled = !habit.group_end
+    onHabitsChange(habits.map((h) => (h.id === habitId ? { ...h, group_end: toggled } : h)))
+    supabase.from("habits").update({ group_end: toggled }).eq("id", habitId).then()
+  }
+
   function handleDelete(habitId: string) {
     onHabitsChange(habits.filter((h) => h.id !== habitId))
     onEntriesChange(entries.filter((e) => e.habit_id !== habitId))
@@ -349,6 +357,7 @@ export default function HabitList({ habits, entries, userId, today, dateLabel, o
                         onToggle={handleToggle}
                         onTitleChange={handleTitleChange}
                         onDelete={handleDelete}
+                        onGroupToggle={handleGroupToggle}
                         sortableContainerRef={setNodeRef}
                         dragHandleProps={{ ...attributes, ...listeners }}
                       />
