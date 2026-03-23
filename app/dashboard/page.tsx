@@ -22,7 +22,7 @@ export default function DashboardPage() {
 
   async function handleLogout() {
     await supabase.auth.signOut()
-    router.replace("/login")
+    router.replace("/")
   }
 
   if (loading) return null
