@@ -47,42 +47,41 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <UserContext.Provider value={user}>
       <div style={{ minHeight: "100vh", backgroundColor: "var(--t-bg)", fontFamily: "var(--font-rubik), sans-serif", padding: "0 0 60px", fontSize: "1.125rem" }}>
 
-        {/* Logo */}
-        <div style={{ position: "fixed", top: 10, left: 20, zIndex: 100, pointerEvents: "none" }}>
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px" }}>
           <Image src={theme === "girl" ? "/logoP.png" : "/logo.png"} alt="MyRituals" height={40} width={160} style={{ objectFit: "contain" }} />
-        </div>
-
-        {/* Boy / Girl toggle */}
-        <div
-          onClick={toggle}
-          title={`Switch to ${theme === "boy" ? "girl" : "boy"} theme`}
-          style={{
-            position: "fixed", top: 13, right: 56, zIndex: 100,
-            display: "flex", alignItems: "center",
-            background: "var(--t-p10)", border: "1.5px solid var(--t-p25)",
-            borderRadius: 20, padding: "3px 4px", cursor: "pointer", gap: 2,
-          }}
-        >
-          {(["boy", "girl"] as const).map((t) => (
-            <div key={t} style={{
-              padding: "3px 9px", borderRadius: 14, fontWeight: 700, fontSize: "0.75rem",
-              background: theme === t ? "var(--t-primary)" : "transparent",
-              color: theme === t ? "#fff" : "var(--t-muted)",
-              transition: "all 0.25s",
-            }}>
-              {t === "boy" ? "♂" : "♀"}
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {/* Boy / Girl toggle */}
+            <div
+              onClick={toggle}
+              title={`Switch to ${theme === "boy" ? "girl" : "boy"} theme`}
+              style={{
+                display: "flex", alignItems: "center",
+                background: "var(--t-p10)", border: "1.5px solid var(--t-p25)",
+                borderRadius: 20, padding: "3px 4px", cursor: "pointer", gap: 2,
+              }}
+            >
+              {(["boy", "girl"] as const).map((t) => (
+                <div key={t} style={{
+                  padding: "3px 9px", borderRadius: 14, fontWeight: 700, fontSize: "0.75rem",
+                  background: theme === t ? "var(--t-primary)" : "transparent",
+                  color: theme === t ? "#fff" : "var(--t-muted)",
+                  transition: "all 0.25s",
+                }}>
+                  {t === "boy" ? "♂" : "♀"}
+                </div>
+              ))}
             </div>
-          ))}
+            {/* Logout */}
+            <button onClick={handleLogout} style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--t-muted)", padding: 6 }} title="Sign out">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+            </button>
+          </div>
         </div>
-
-        {/* Logout */}
-        <button onClick={handleLogout} style={{ position: "fixed", top: 10, right: 14, background: "transparent", border: "none", cursor: "pointer", color: "var(--t-muted)", padding: 6, zIndex: 100 }} title="Sign out">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-            <polyline points="16 17 21 12 16 7" />
-            <line x1="21" y1="12" x2="9" y2="12" />
-          </svg>
-        </button>
 
         {/* Tab Bar */}
         <div className="app-tab-wrapper">

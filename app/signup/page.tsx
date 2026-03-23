@@ -5,9 +5,12 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
 import { supabase } from "../lib/supabase"
+import ThemeToggle from "../components/ThemeToggle"
+import { useTheme } from "../context/ThemeContext"
 
 export default function SignupPage() {
   const router = useRouter()
+  const { theme } = useTheme()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
@@ -38,22 +41,16 @@ export default function SignupPage() {
       overflow: "hidden",
       display: "flex",
       flexDirection: "column",
-      backgroundColor: "#b0d2e3",
+      backgroundColor: "var(--t-bg)",
       fontFamily: "var(--font-rubik), sans-serif",
     }}>
 
       {/* Nav */}
       <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 40px", flexShrink: 0 }}>
         <Link href="/">
-          <Image src="/logo.png" alt="MyRituals" width={148} height={37} style={{ objectFit: "contain" }} priority />
+          <Image src={theme === "girl" ? "/logoP.png" : "/logo.png"} alt="MyRituals" width={148} height={37} style={{ objectFit: "contain" }} priority />
         </Link>
-        <Link href="/" style={{
-          fontSize: "0.875rem", fontWeight: 600, color: "#2f6690",
-          textDecoration: "none", padding: "8px 18px",
-          borderRadius: "10px", background: "rgba(47,102,144,0.1)",
-        }}>
-          ← Back
-        </Link>
+        <ThemeToggle />
       </nav>
 
       {/* Form */}
@@ -61,12 +58,12 @@ export default function SignupPage() {
         <div style={{ width: "100%", maxWidth: "360px" }}>
 
           <h1 style={{
-            fontSize: "1.75rem", fontWeight: 800, color: "#1e4f72",
+            fontSize: "1.75rem", fontWeight: 800, color: "var(--t-heading)",
             letterSpacing: "-0.03em", margin: "0 0 6px", textAlign: "center",
           }}>
             Create account
           </h1>
-          <p style={{ fontSize: "0.9rem", color: "#3a6080", margin: "0 0 28px", textAlign: "center" }}>
+          <p style={{ fontSize: "0.9rem", color: "var(--t-muted)", margin: "0 0 28px", textAlign: "center" }}>
             Start building your rituals today
           </p>
 
@@ -94,7 +91,7 @@ export default function SignupPage() {
               padding: "13px",
               borderRadius: "12px",
               border: "none",
-              backgroundColor: "#2f6690",
+              backgroundColor: "var(--t-primary)",
               color: "#fff",
               fontSize: "0.92rem",
               fontWeight: 600,
@@ -106,9 +103,9 @@ export default function SignupPage() {
             </button>
           </form>
 
-          <p style={{ marginTop: "20px", fontSize: "0.88rem", color: "#3a6080", textAlign: "center" }}>
+          <p style={{ marginTop: "20px", fontSize: "0.88rem", color: "var(--t-muted)", textAlign: "center" }}>
             Already have an account?{" "}
-            <Link href="/login" style={{ color: "#2f6690", fontWeight: 600, textDecoration: "none" }}>
+            <Link href="/login" style={{ color: "var(--t-primary)", fontWeight: 600, textDecoration: "none" }}>
               Sign in
             </Link>
           </p>
@@ -122,10 +119,10 @@ export default function SignupPage() {
 const inputStyle: React.CSSProperties = {
   padding: "12px 16px",
   borderRadius: "12px",
-  border: "1.5px solid #c8dfe9",
+  border: "1.5px solid var(--t-input-border)",
   backgroundColor: "rgba(255,255,255,0.5)",
   fontSize: "0.95rem",
-  color: "#2f6690",
+  color: "var(--t-primary)",
   outline: "none",
   width: "100%",
   boxSizing: "border-box",
