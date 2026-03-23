@@ -32,7 +32,7 @@
 
 /* ── Girl (pink) theme — same HSL lightness/saturation, hue rotated to ~330° ── */
 [data-theme="girl"] {
-  --t-bg:           #e3b0cc;
+  --t-bg:           #e2afc4;
   --t-primary:      #902f60;
   --t-muted:        #99607a;
   --t-icon:         #ccb0bf;

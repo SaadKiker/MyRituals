@@ -1,10 +1,266 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
 import { supabase } from "./lib/supabase"
+
+// ─── Shared card shell ────────────────────────────────────────────────────────
+
+const CARD: React.CSSProperties = {
+  background: "#f4f9fc",
+  borderRadius: 18,
+  padding: "18px 18px 16px",
+  width: 244,
+  fontFamily: "var(--font-rubik), sans-serif",
+  boxShadow: "0 20px 60px rgba(47,102,144,0.16), 0 4px 16px rgba(47,102,144,0.08)",
+}
+
+const DATE_LABEL: React.CSSProperties = {
+  fontSize: "0.62rem",
+  fontWeight: 700,
+  color: "#99b8cc",
+  textTransform: "uppercase",
+  letterSpacing: "0.1em",
+  margin: "0 0 11px",
+}
+
+// ─── Habits card ──────────────────────────────────────────────────────────────
+
+const HABITS = [
+  { label: "Morning run", done: true  },
+  { label: "Read 30 min", done: true  },
+  { label: "Meditate",    done: false },
+  { label: "Journal",     done: false },
+]
+
+function HabitsCard() {
+  return (
+    <div style={CARD}>
+      <p style={DATE_LABEL}>Monday · March 23</p>
+      {HABITS.map(({ label, done }) => (
+        <div key={label} style={{
+          background: done ? "#dcfce7" : "#fff",
+          border: done ? "2px solid rgba(34,197,94,0.45)" : "1.5px solid #d8eaf3",
+          borderRadius: 11,
+          padding: "8px 10px",
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          marginBottom: 6,
+          boxShadow: done ? "0 4px 12px rgba(34,197,94,0.13)" : "0 1px 4px rgba(47,102,144,0.05)",
+        }}>
+          {/* 6-dot drag handle */}
+          <svg width="8" height="13" viewBox="0 0 10 16" fill="#99b8cc" style={{ flexShrink: 0 }}>
+            <circle cx="2" cy="2"  r="1.5"/><circle cx="8" cy="2"  r="1.5"/>
+            <circle cx="2" cy="8"  r="1.5"/><circle cx="8" cy="8"  r="1.5"/>
+            <circle cx="2" cy="14" r="1.5"/><circle cx="8" cy="14" r="1.5"/>
+          </svg>
+          {/* Square checkbox */}
+          <div style={{
+            width: 19, height: 19, borderRadius: 5, flexShrink: 0,
+            background: done ? "#22c55e" : "transparent",
+            border: done ? "2px solid #22c55e" : "2px solid #d8eaf3",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: done ? "0 3px 8px rgba(34,197,94,0.38)" : "none",
+          }}>
+            {done && (
+              <svg width="10" height="8" viewBox="0 0 13 10" fill="none">
+                <path d="M1.5 5L5 8.5L11.5 1.5" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            )}
+          </div>
+          <span style={{
+            fontSize: "0.8rem", fontWeight: 500,
+            color: done ? "#166534" : "#2f6690",
+          }}>{label}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ─── Schedule card ────────────────────────────────────────────────────────────
+
+const HOURS = ["07:00", "08:00", "09:00", "10:00", "11:00"]
+const H = 34 // px per hour slot
+
+const EVENTS = [
+  { title: "Morning run",  start: 0, span: 1, color: "#5070a0" },
+  { title: "Deep work",    start: 2, span: 2, color: "#e07060" },
+  { title: "Lunch",        start: 4, span: 1, color: "#4a9070" },
+]
+
+function ScheduleCard() {
+  return (
+    <div style={CARD}>
+      <p style={DATE_LABEL}>Monday · March 23</p>
+      <div style={{ position: "relative" }}>
+        {HOURS.map((h) => (
+          <div key={h} style={{ height: H, display: "flex", alignItems: "flex-start", borderTop: "1px solid #deedf5" }}>
+            <span style={{ fontSize: "0.58rem", fontWeight: 600, color: "#99b8cc", width: 34, paddingTop: 3, flexShrink: 0 }}>{h}</span>
+          </div>
+        ))}
+        {EVENTS.map(({ title, start, span, color }) => (
+          <div key={title} style={{
+            position: "absolute",
+            top: start * H + 1,
+            left: 34,
+            right: 0,
+            height: span * H - 3,
+            background: color,
+            borderRadius: 7,
+            borderLeft: "3px solid rgba(0,0,0,0.18)",
+            padding: "4px 8px",
+            color: "#fff",
+            fontSize: "0.72rem",
+            fontWeight: 600,
+            overflow: "hidden",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.14)",
+            display: "flex",
+            alignItems: "center",
+          }}>
+            {title}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── Goals card ───────────────────────────────────────────────────────────────
+
+const GOALS = [
+  { title: "Read 12 books",  current: 8,    target: 12   },
+  { title: "Save $5,000",    current: 3200, target: 5000 },
+]
+
+function GoalsCard() {
+  return (
+    <div style={CARD}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 13 }}>
+        <p style={{ fontSize: "0.95rem", fontWeight: 700, color: "#2f6690", margin: 0 }}>2025 Goals</p>
+        <span style={{
+          fontSize: "0.62rem", fontWeight: 700, color: "#2f6690",
+          background: "rgba(47,102,144,0.1)", border: "1px solid rgba(47,102,144,0.18)",
+          borderRadius: 7, padding: "3px 8px",
+        }}>
+          45 days
+        </span>
+      </div>
+
+      {GOALS.map(({ title, current, target }) => {
+        const pct = Math.round((current / target) * 100)
+        return (
+          <div key={title} style={{
+            background: "#fff",
+            border: "1.5px solid #d8eaf3",
+            borderRadius: 11,
+            padding: "11px 13px",
+            marginBottom: 7,
+            boxShadow: "0 2px 6px rgba(47,102,144,0.05)",
+          }}>
+            <p style={{ margin: "0 0 8px", fontSize: "0.78rem", fontWeight: 500, color: "#2f6690" }}>{title}</p>
+            {/* Progress bar */}
+            <div style={{ height: 6, background: "#deedf5", borderRadius: 4, overflow: "hidden", marginBottom: 5 }}>
+              <div style={{ width: `${pct}%`, height: "100%", background: "#2f6690", borderRadius: 4 }} />
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <span style={{ fontSize: "0.65rem", color: "#99b8cc", fontWeight: 500 }}>{current} / {target}</span>
+              <span style={{ fontSize: "0.65rem", color: "#2f6690", fontWeight: 700 }}>{pct}%</span>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ─── Carousel ─────────────────────────────────────────────────────────────────
+
+const SLIDES = [
+  { label: "Habits",   Card: HabitsCard   },
+  { label: "Schedule", Card: ScheduleCard },
+  { label: "Goals",    Card: GoalsCard    },
+]
+
+function MockupCarousel() {
+  const [active, setActive] = useState(0)
+
+  const arrowBtn: React.CSSProperties = {
+    position: "absolute",
+    top: "38%",
+    transform: "translateY(-50%)",
+    width: 28, height: 28, borderRadius: "50%",
+    background: "rgba(47,102,144,0.12)",
+    border: "none", cursor: "pointer",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    color: "#2f6690", transition: "background 0.2s",
+    zIndex: 10,
+  }
+
+  return (
+    <div style={{ position: "relative", width: 244 }}>
+      {/* Stacked cards + arrows (arrows inside so top:50% is relative to card height) */}
+      <div style={{ position: "relative", height: 320 }}>
+        {/* Left arrow */}
+        <button
+          onClick={() => setActive((a) => (a - 1 + 3) % 3)}
+          style={{ ...arrowBtn, left: -38 }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(47,102,144,0.22)")}
+          onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(47,102,144,0.12)")}
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M7.5 2L3.5 6l4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
+
+        {/* Right arrow */}
+        <button
+          onClick={() => setActive((a) => (a + 1) % 3)}
+          style={{ ...arrowBtn, right: -38 }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(47,102,144,0.22)")}
+          onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(47,102,144,0.12)")}
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M4.5 2l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
+        {SLIDES.map(({ Card }, i) => {
+          const offset = (i - active + 3) % 3
+          const transforms: Record<number, string> = {
+            0: "rotate(0deg)   scale(1)    translateY(0px)",
+            1: "rotate(2.5deg) scale(0.95) translateY(12px)",
+            2: "rotate(-2deg)  scale(0.91) translateY(22px)",
+          }
+          const opacities  = [1, 0.55, 0.28]
+          const zIndexes   = [3, 2, 1]
+
+          return (
+            <div
+              key={i}
+              style={{
+                position: "absolute",
+                top: 0, left: 0,
+                transform: transforms[offset],
+                opacity: opacities[offset],
+                zIndex: zIndexes[offset],
+                pointerEvents: offset === 0 ? "auto" : "none",
+                transition: "transform 0.45s cubic-bezier(0.4,0,0.2,1), opacity 0.45s",
+              }}
+            >
+              <Card />
+            </div>
+          )
+        })}
+      </div>
+
+    </div>
+  )
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function Home() {
   const router = useRouter()
@@ -16,79 +272,87 @@ export default function Home() {
   }, [router])
 
   return (
-    <main style={styles.main}>
-      <div style={styles.card}>
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
-          <Image src="/logo.png" alt="MyRituals" width={260} height={65} style={{ objectFit: "contain" }} />
-        </div>
-        <p style={styles.subtitle}>
-          Build habits, schedule your day, reach your goals.
-        </p>
-        <div style={styles.actions}>
-          <Link href="/signup" style={styles.primaryBtn}>
-            Get started
-          </Link>
-          <Link href="/login" style={styles.secondaryBtn}>
-            Sign in
-          </Link>
+    <div style={{
+      height: "100vh",
+      overflow: "hidden",
+      display: "flex",
+      flexDirection: "column",
+      backgroundColor: "#b0d2e3",
+      fontFamily: "var(--font-rubik), sans-serif",
+    }}>
+
+      {/* Nav */}
+      <nav style={{ display: "flex", alignItems: "center", padding: "20px 40px", flexShrink: 0 }}>
+        <Image src="/logo.png" alt="MyRituals" width={148} height={37} style={{ objectFit: "contain" }} priority />
+      </nav>
+
+      {/* Hero */}
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 40px 32px" }}>
+        <div style={{ width: "100%", maxWidth: "960px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "48px" }}>
+
+          {/* Left */}
+          <div style={{ flex: "0 0 auto", maxWidth: "440px" }}>
+            <h1 style={{
+              fontSize: "clamp(2.4rem, 5vw, 3.6rem)",
+              fontWeight: 800,
+              color: "#1e4f72",
+              letterSpacing: "-0.04em",
+              lineHeight: 1.1,
+              margin: "0 0 18px",
+            }}>
+              Your day,<br />beautifully<br />structured.
+            </h1>
+
+            <p style={{
+              fontSize: "clamp(0.9rem, 1.8vw, 1rem)",
+              color: "#3a6080",
+              lineHeight: 1.75,
+              margin: "0 0 34px",
+              fontWeight: 400,
+            }}>
+              Track your habits, plan your schedule,<br />
+              and reach your goals — all in one place.
+            </p>
+
+            <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+              <Link href="/signup" style={{
+                display: "inline-block",
+                padding: "13px 26px",
+                borderRadius: "12px",
+                background: "#2f6690",
+                color: "#fff",
+                fontWeight: 600,
+                fontSize: "0.92rem",
+                textDecoration: "none",
+                letterSpacing: "0.01em",
+              }}>
+                Get started free
+              </Link>
+              <Link href="/login" style={{
+                display: "inline-block",
+                padding: "13px 26px",
+                borderRadius: "12px",
+                background: "rgba(255,255,255,0.35)",
+                border: "1.5px solid rgba(47,102,144,0.25)",
+                color: "#2f6690",
+                fontWeight: 600,
+                fontSize: "0.92rem",
+                textDecoration: "none",
+                letterSpacing: "0.01em",
+              }}>
+                Sign in
+              </Link>
+            </div>
+          </div>
+
+          {/* Right */}
+          <div style={{ flex: "0 0 auto" }}>
+            <MockupCarousel />
+          </div>
+
         </div>
       </div>
-    </main>
-  )
-}
 
-const styles: Record<string, React.CSSProperties> = {
-  main: {
-    minHeight: "100vh",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#b0d2e3",
-    padding: "24px",
-    fontFamily: "var(--font-rubik), sans-serif",
-  },
-  card: {
-    width: "100%",
-    maxWidth: "420px",
-    textAlign: "center",
-  },
-  title: {
-    fontSize: "clamp(2rem, 8vw, 3rem)",
-    fontWeight: 700,
-    color: "#2f6690",
-    letterSpacing: "-0.02em",
-    margin: "0 0 12px",
-  },
-  subtitle: {
-    fontSize: "clamp(0.95rem, 3vw, 1.05rem)",
-    color: "#3a6080",
-    margin: "0 0 32px",
-    lineHeight: 1.6,
-  },
-  actions: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "12px",
-  },
-  primaryBtn: {
-    display: "block",
-    padding: "13px",
-    borderRadius: "10px",
-    backgroundColor: "#2f6690",
-    color: "#fff",
-    fontWeight: 600,
-    fontSize: "0.95rem",
-    textDecoration: "none",
-  },
-  secondaryBtn: {
-    display: "block",
-    padding: "13px",
-    borderRadius: "10px",
-    backgroundColor: "transparent",
-    border: "1.5px solid #2f6690",
-    color: "#2f6690",
-    fontWeight: 600,
-    fontSize: "0.95rem",
-    textDecoration: "none",
-  },
+    </div>
+  )
 }

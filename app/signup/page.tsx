@@ -33,114 +33,101 @@ export default function SignupPage() {
   }
 
   return (
-    <main style={styles.main}>
-      <div style={styles.card}>
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 6 }}>
-          <Image src="/logo.png" alt="MyRituals" width={220} height={55} style={{ objectFit: "contain" }} />
+    <div style={{
+      height: "100vh",
+      overflow: "hidden",
+      display: "flex",
+      flexDirection: "column",
+      backgroundColor: "#b0d2e3",
+      fontFamily: "var(--font-rubik), sans-serif",
+    }}>
+
+      {/* Nav */}
+      <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 40px", flexShrink: 0 }}>
+        <Link href="/">
+          <Image src="/logo.png" alt="MyRituals" width={148} height={37} style={{ objectFit: "contain" }} priority />
+        </Link>
+        <Link href="/" style={{
+          fontSize: "0.875rem", fontWeight: 600, color: "#2f6690",
+          textDecoration: "none", padding: "8px 18px",
+          borderRadius: "10px", background: "rgba(47,102,144,0.1)",
+        }}>
+          ← Back
+        </Link>
+      </nav>
+
+      {/* Form */}
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 24px 40px" }}>
+        <div style={{ width: "100%", maxWidth: "360px" }}>
+
+          <h1 style={{
+            fontSize: "1.75rem", fontWeight: 800, color: "#1e4f72",
+            letterSpacing: "-0.03em", margin: "0 0 6px", textAlign: "center",
+          }}>
+            Create account
+          </h1>
+          <p style={{ fontSize: "0.9rem", color: "#3a6080", margin: "0 0 28px", textAlign: "center" }}>
+            Start building your rituals today
+          </p>
+
+          <form onSubmit={handleSignup} style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              style={inputStyle}
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+              style={inputStyle}
+            />
+            {error && <p style={{ fontSize: "0.82rem", color: "#c0392b", margin: "0" }}>{error}</p>}
+            <button type="submit" disabled={loading} style={{
+              marginTop: "4px",
+              padding: "13px",
+              borderRadius: "12px",
+              border: "none",
+              backgroundColor: "#2f6690",
+              color: "#fff",
+              fontSize: "0.92rem",
+              fontWeight: 600,
+              cursor: "pointer",
+              fontFamily: "inherit",
+              letterSpacing: "0.01em",
+            }}>
+              {loading ? "Creating account…" : "Get started"}
+            </button>
+          </form>
+
+          <p style={{ marginTop: "20px", fontSize: "0.88rem", color: "#3a6080", textAlign: "center" }}>
+            Already have an account?{" "}
+            <Link href="/login" style={{ color: "#2f6690", fontWeight: 600, textDecoration: "none" }}>
+              Sign in
+            </Link>
+          </p>
         </div>
-        <p style={styles.subtitle}>Create your account</p>
-        <form onSubmit={handleSignup} style={styles.form}>
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            style={styles.input}
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            minLength={6}
-            style={styles.input}
-          />
-          {error && <p style={styles.error}>{error}</p>}
-          <button type="submit" disabled={loading} style={styles.button}>
-            {loading ? "Creating account…" : "Sign up"}
-          </button>
-        </form>
-        <p style={styles.switchText}>
-          Already have an account?{" "}
-          <Link href="/login" style={styles.link}>
-            Sign in
-          </Link>
-        </p>
       </div>
-    </main>
+
+    </div>
   )
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  main: {
-    minHeight: "100vh",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#b0d2e3",
-    padding: "24px",
-    fontFamily: "var(--font-rubik), sans-serif",
-  },
-  card: {
-    width: "100%",
-    maxWidth: "380px",
-    textAlign: "center",
-  },
-  title: {
-    fontSize: "clamp(1.8rem, 6vw, 2.4rem)",
-    fontWeight: 700,
-    color: "#2f6690",
-    letterSpacing: "-0.02em",
-    margin: "0 0 6px",
-  },
-  subtitle: {
-    fontSize: "0.95rem",
-    color: "#3a6080",
-    margin: "0 0 28px",
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "12px",
-  },
-  input: {
-    padding: "12px 16px",
-    borderRadius: "10px",
-    border: "1.5px solid #c8dfe9",
-    backgroundColor: "#f0f8fc",
-    fontSize: "0.95rem",
-    color: "#2f6690",
-    outline: "none",
-    width: "100%",
-    boxSizing: "border-box",
-  },
-  button: {
-    marginTop: "4px",
-    padding: "12px",
-    borderRadius: "10px",
-    border: "none",
-    backgroundColor: "#2f6690",
-    color: "#fff",
-    fontSize: "0.95rem",
-    fontWeight: 600,
-    cursor: "pointer",
-    transition: "opacity 0.15s",
-  },
-  error: {
-    fontSize: "0.85rem",
-    color: "#c0392b",
-    margin: "0",
-  },
-  switchText: {
-    marginTop: "20px",
-    fontSize: "0.88rem",
-    color: "#3a6080",
-  },
-  link: {
-    color: "#2f6690",
-    fontWeight: 600,
-    textDecoration: "none",
-  },
+const inputStyle: React.CSSProperties = {
+  padding: "12px 16px",
+  borderRadius: "12px",
+  border: "1.5px solid #c8dfe9",
+  backgroundColor: "rgba(255,255,255,0.5)",
+  fontSize: "0.95rem",
+  color: "#2f6690",
+  outline: "none",
+  width: "100%",
+  boxSizing: "border-box",
+  fontFamily: "var(--font-rubik), sans-serif",
 }
