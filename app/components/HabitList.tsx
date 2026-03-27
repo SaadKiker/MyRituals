@@ -26,6 +26,8 @@ type Props = {
   userId: string
   today: string
   dateLabel: string
+  headerLabel?: string
+  showDateLabel?: boolean
   onHabitsChange: (habits: Habit[]) => void
   onEntriesChange: (entries: HabitEntry[]) => void
 }
@@ -132,9 +134,17 @@ function HabitsEndDropSlot({ children }: { children: React.ReactNode }) {
   return <div ref={setNodeRef}>{children}</div>
 }
 
-export default function HabitList({ habits, entries, userId, today, dateLabel, onHabitsChange, onEntriesChange }: Props) {
-  const [resetting, setResetting] = useState(false)
-  const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+export default function HabitList({
+  habits,
+  entries,
+  userId,
+  today,
+  dateLabel,
+  headerLabel,
+  showDateLabel = true,
+  onHabitsChange,
+  onEntriesChange,
+}: Props) {
   const [activeHabitId, setActiveHabitId] = useState<string | null>(null)
   const [overHabitId, setOverHabitId] = useState<string | null>(null)
   const movedDuringDrag = useRef(false)
@@ -237,28 +247,19 @@ export default function HabitList({ habits, entries, userId, today, dateLabel, o
     }
   }
 
-  function startReset() {
+  async function resetCheckedHabits() {
     const anyChecked = habits.some((h) => {
       const e = entries.find((en) => en.habit_id === h.id)
       return e?.completed === 1
     })
     if (!anyChecked) return
-    setResetting(true)
-    resetTimer.current = setTimeout(async () => {
-      const updated = entries.map((e) => ({ ...e, completed: 0 as const }))
-      onEntriesChange(updated)
-      setResetting(false)
-      await supabase
-        .from("habit_entries")
-        .update({ completed: 0 })
-        .eq("user_id", userId)
-        .eq("entry_date", today)
-    }, 1000)
-  }
-
-  function cancelReset() {
-    if (resetTimer.current) clearTimeout(resetTimer.current)
-    setResetting(false)
+    const updated = entries.map((e) => ({ ...e, completed: 0 as const }))
+    onEntriesChange(updated)
+    await supabase
+      .from("habit_entries")
+      .update({ completed: 0 })
+      .eq("user_id", userId)
+      .eq("entry_date", today)
   }
 
   return (
@@ -271,47 +272,34 @@ export default function HabitList({ habits, entries, userId, today, dateLabel, o
             color: "var(--t-muted)",
             textTransform: "uppercase",
             letterSpacing: "0.06em",
+            visibility: showDateLabel || Boolean(headerLabel) ? "visible" : "hidden",
           }}
         >
-          {dateLabel}
+          {showDateLabel ? dateLabel : (headerLabel ?? "Habits")}
         </span>
-        <div
-          onMouseDown={startReset}
-          onMouseUp={cancelReset}
-          onMouseLeave={cancelReset}
-          onTouchStart={startReset}
-          onTouchEnd={cancelReset}
+        <button
+          onClick={() => void resetCheckedHabits()}
+          title="Reset habits"
           style={{
-            position: "relative",
-            overflow: "hidden",
-            padding: "6px 14px",
+            width: 32,
+            height: 32,
             borderRadius: 8,
-            border: "1px solid rgba(192,57,43,0.35)",
+            border: "1px solid rgba(192,57,43,0.32)",
             background: "rgba(192,57,43,0.08)",
             color: "#c0392b",
-            fontSize: "0.8rem",
-            fontWeight: 600,
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
             cursor: "pointer",
-            userSelect: "none",
-            fontFamily: "inherit",
+            padding: 0,
           }}
         >
-          <div
-            style={{
-              position: "absolute",
-              left: 0,
-              top: 0,
-              bottom: 0,
-              width: resetting ? "100%" : "0%",
-              background: "rgba(192,57,43,0.85)",
-              transition: resetting ? "width 1s linear" : "width 0.2s",
-              zIndex: 1,
-            }}
-          />
-          <span style={{ position: "relative", zIndex: 2, color: resetting ? "#fff" : "#c0392b" }}>
-            {resetting ? "Hold…" : "Hold to Reset"}
-          </span>
-        </div>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="23 4 23 10 17 10" />
+            <polyline points="1 20 1 14 7 14" />
+            <path d="M3.51 9a9 9 0 0 1 14.13-3.36L23 10M1 14l5.36 4.36A9 9 0 0 0 20.49 15" />
+          </svg>
+        </button>
       </div>
 
       <DndContext
@@ -384,21 +372,19 @@ export default function HabitList({ habits, entries, userId, today, dateLabel, o
         </SortableContext>
 
         <HabitsEndDropSlot>
-          <div style={{ marginTop: 8 }}>
+          <div style={{ marginTop: 8, border: "2px dashed var(--t-bg)", borderRadius: 12, padding: "12px", textAlign: "center" }}>
             <button
               onClick={addHabit}
               style={{
-                width: "100%",
-                padding: "12px",
                 background: "transparent",
-                border: "2px dashed var(--t-bg)",
-                borderRadius: 12,
+                border: "none",
                 color: "var(--t-muted)",
                 fontWeight: 500,
                 fontSize: "0.9rem",
                 cursor: "pointer",
                 fontFamily: "inherit",
                 transition: "color 0.2s",
+                padding: 0,
               }}
               onMouseEnter={(e) => {
                 ;(e.currentTarget as HTMLButtonElement).style.color = "var(--t-primary)"

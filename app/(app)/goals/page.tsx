@@ -490,9 +490,8 @@ export default function GoalsPage() {
             )}
 
             <AddSpaceDropSlot>
-              <button
+              <div
                 className="add-space-slot"
-                onClick={addSpace}
                 style={{
                   width: "100%",
                   minHeight: 120,
@@ -504,7 +503,6 @@ export default function GoalsPage() {
                   color: "var(--t-muted)",
                   fontWeight: 700,
                   fontSize: "1.2rem",
-                  cursor: "pointer",
                   fontFamily: "inherit",
                   display: "flex",
                   flexDirection: "column",
@@ -513,19 +511,30 @@ export default function GoalsPage() {
                   textAlign: "center",
                   transition: "color 0.2s, border-color 0.2s",
                 }}
-                onMouseEnter={(e) => {
-                  ; (e.currentTarget as HTMLButtonElement).style.color = "var(--t-primary)"
-                  ; (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--t-primary)"
-                }}
-                onMouseLeave={(e) => {
-                  ; (e.currentTarget as HTMLButtonElement).style.color = "var(--t-muted)"
-                  ; (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--t-p30)"
-                }}
-                title="Add Space"
               >
-                <div style={{ fontSize: "2rem", lineHeight: 1, marginBottom: 4 }}>+</div>
-                <div>Add Space</div>
-              </button>
+                <button
+                  onClick={addSpace}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    color: "var(--t-muted)",
+                    fontWeight: 700,
+                    fontSize: "1.2rem",
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                    padding: 0,
+                  }}
+                  onMouseEnter={(e) => {
+                    ; (e.currentTarget as HTMLButtonElement).style.color = "var(--t-primary)"
+                  }}
+                  onMouseLeave={(e) => {
+                    ; (e.currentTarget as HTMLButtonElement).style.color = "var(--t-muted)"
+                  }}
+                  title="Add Space"
+                >
+                  + Add Space
+                </button>
+              </div>
             </AddSpaceDropSlot>
           </div>
         </SortableContext>

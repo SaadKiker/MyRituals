@@ -288,8 +288,7 @@ export default function GoalSet({ goalSet, userId, onDelete, onUpdate, onDragSta
       </div>
 
       {/* Add Goal Button */}
-      <button
-        onClick={addGoal}
+      <div
         style={{
           width: "100%",
           marginTop: 8,
@@ -297,22 +296,32 @@ export default function GoalSet({ goalSet, userId, onDelete, onUpdate, onDragSta
           background: "transparent",
           border: "2px dashed var(--t-bg)",
           borderRadius: 12,
-          color: "var(--t-muted)",
-          fontWeight: 500,
-          fontSize: "0.9rem",
-          cursor: "pointer",
-          fontFamily: "inherit",
-          transition: "color 0.2s",
-        }}
-        onMouseEnter={(e) => {
-          ;(e.currentTarget as HTMLButtonElement).style.color = "var(--t-primary)"
-        }}
-        onMouseLeave={(e) => {
-          ;(e.currentTarget as HTMLButtonElement).style.color = "var(--t-muted)"
+          textAlign: "center",
         }}
       >
-        + Add Goal
-      </button>
+        <button
+          onClick={addGoal}
+          style={{
+            background: "transparent",
+            border: "none",
+            color: "var(--t-muted)",
+            fontWeight: 500,
+            fontSize: "0.9rem",
+            cursor: "pointer",
+            fontFamily: "inherit",
+            transition: "color 0.2s",
+            padding: 0,
+          }}
+          onMouseEnter={(e) => {
+            ;(e.currentTarget as HTMLButtonElement).style.color = "var(--t-primary)"
+          }}
+          onMouseLeave={(e) => {
+            ;(e.currentTarget as HTMLButtonElement).style.color = "var(--t-muted)"
+          }}
+        >
+          + Add Goal
+        </button>
+      </div>
     </div>
   )
 }

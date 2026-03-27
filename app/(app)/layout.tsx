@@ -17,8 +17,8 @@ export function useAppUser() {
 
 const TABS = [
   { label: "Goals", href: "/goals" },
-  { label: "Habits", href: "/daily" },
-  { label: "Schedule", href: "/schedule" },
+  { label: "Tasks", href: "/tasks" },
+  { label: "Today", href: "/schedule" },
 ] as const
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {

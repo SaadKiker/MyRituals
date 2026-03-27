@@ -1,10 +1,12 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { supabase } from "../../lib/supabase"
 import ScheduleGrid from "../../components/ScheduleGrid"
 import EventEditor from "../../components/EventEditor"
 import { CAL_ALL_HOURS, type ScheduleEventType, type EventEntry } from "../../components/ScheduleEvent"
+import HabitList from "../../components/HabitList"
+import type { Habit, HabitEntry } from "../../components/HabitItem"
 import { useAppUser } from "../layout"
 
 function getToday() {
@@ -37,11 +39,11 @@ export default function SchedulePage() {
   const user = useAppUser()
   const [events, setEvents] = useState<ScheduleEventType[]>([])
   const [entries, setEntries] = useState<EventEntry[]>([])
+  const [habits, setHabits] = useState<Habit[]>([])
+  const [habitEntries, setHabitEntries] = useState<HabitEntry[]>([])
   const [editor, setEditor] = useState<EditorState | null>(null)
   const [contextMenu, setContextMenu] = useState<ContextMenu | null>(null)
   const [loading, setLoading] = useState(true)
-  const [resetting, setResetting] = useState(false)
-  const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const today = getToday()
 
   const [wakeHour, setWakeHour] = useState(12)
@@ -91,12 +93,24 @@ export default function SchedulePage() {
         .select("*")
         .eq("user_id", user.id)
         .eq("entry_date", today),
-    ]).then(([{ data: evts }, { data: ents }]) => {
+      supabase
+        .from("habits")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("sort_order", { ascending: true }),
+      supabase
+        .from("habit_entries")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("entry_date", today),
+    ]).then(([{ data: evts }, { data: ents }, { data: habitsData }, { data: habitEntriesData }]) => {
       const sorted = ((evts ?? []) as ScheduleEventType[]).sort(
         (a, b) => CAL_ALL_HOURS.indexOf(a.start_hour) - CAL_ALL_HOURS.indexOf(b.start_hour)
       )
       setEvents(sorted)
       setEntries((ents ?? []) as EventEntry[])
+      setHabits((habitsData as Habit[]) ?? [])
+      setHabitEntries((habitEntriesData as HabitEntry[]) ?? [])
       setLoading(false)
     })
   }, [user.id, today])
@@ -173,24 +187,15 @@ export default function SchedulePage() {
     setEditor((prev) => prev)
   }
 
-  function startReset() {
+  async function resetScheduleStatuses() {
     const anySet = entries.some((e) => e.status !== null)
     if (!anySet) return
-    setResetting(true)
-    resetTimer.current = setTimeout(async () => {
-      setEntries([])
-      setResetting(false)
-      await supabase
-        .from("schedule_event_entries")
-        .delete()
-        .eq("user_id", user.id)
-        .eq("entry_date", today)
-    }, 1000)
-  }
-
-  function cancelReset() {
-    if (resetTimer.current) clearTimeout(resetTimer.current)
-    setResetting(false)
+    setEntries([])
+    await supabase
+      .from("schedule_event_entries")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("entry_date", today)
   }
 
   const allComplete =
@@ -206,180 +211,222 @@ export default function SchedulePage() {
 
   return (
     <>
-      <div style={{ maxWidth: 760, margin: "90px auto 0", padding: "0 20px" }}>
-        <div className="schedule-header">
-          <span className="schedule-header-date" style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--t-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-            {dateLabel}
-          </span>
-          <div className="schedule-header-controls" style={{ display: "flex", alignItems: "center", gap: 8, position: "relative" }}>
-            {/* Sleep Hours Button */}
-            <div style={{ position: "relative" }}>
-              <button
-                onClick={openSettings}
-                title="Set wake & sleep hours"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 5,
-                  padding: "6px 10px",
-                  borderRadius: 8,
-                  border: "1px solid var(--t-input-border)",
-                  background: "var(--t-p06)",
-                  color: "var(--t-muted)",
-                  fontSize: "0.78rem",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                }}
-              >
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12 6 12 12 16 14" />
-                </svg>
-                {fmt(wakeHour)} – {fmt(sleepHour)}
-              </button>
+      <style>{`
+        .habit-row:hover .habit-del-btn {
+          opacity: 1 !important;
+        }
+      `}</style>
 
-              {showSettings && (
-                <>
-                  <div
-                    onClick={() => setShowSettings(false)}
-                    style={{ position: "fixed", inset: 0, zIndex: 199 }}
-                  />
-                  <div
+      <div className="schedule-shell" style={{ margin: "90px auto 0", padding: "0 20px 20px" }}>
+        <div className="schedule-split">
+          <div className="schedule-left">
+            <div className="schedule-calendar">
+              <div className="schedule-header">
+                <span className="schedule-header-date" style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--t-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                  {dateLabel}
+                </span>
+                <div className="schedule-header-controls" style={{ display: "flex", alignItems: "center", gap: 8, position: "relative" }}>
+                  {/* Sleep Hours Button */}
+                  <div style={{ position: "relative" }}>
+                    <button
+                      onClick={openSettings}
+                      title="Set wake & sleep hours"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 5,
+                        padding: "6px 10px",
+                        borderRadius: 8,
+                        border: "1px solid var(--t-input-border)",
+                        background: "var(--t-p06)",
+                        color: "var(--t-muted)",
+                        fontSize: "0.78rem",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        fontFamily: "inherit",
+                      }}
+                    >
+                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <polyline points="12 6 12 12 16 14" />
+                      </svg>
+                      {fmt(wakeHour)} – {fmt(sleepHour)}
+                    </button>
+
+                    {showSettings && (
+                      <>
+                        <div
+                          onClick={() => setShowSettings(false)}
+                          style={{ position: "fixed", inset: 0, zIndex: 199 }}
+                        />
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: "calc(100% + 8px)",
+                            right: 0,
+                            background: "var(--t-panel)",
+                            border: "1.5px solid var(--t-input-border)",
+                            borderRadius: 12,
+                            padding: 16,
+                            boxShadow: "0 8px 24px var(--t-p18)",
+                            zIndex: 200,
+                            minWidth: 200,
+                          }}
+                        >
+                          <div style={{ fontSize: 12, fontWeight: 700, color: "var(--t-primary)", marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                            Hours
+                          </div>
+                          <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
+                            <div style={{ flex: 1 }}>
+                              <label style={{ display: "block", fontSize: 10, color: "var(--t-time)", fontWeight: 600, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>Wake</label>
+                              <select
+                                value={tempWake}
+                                onChange={(e) => setTempWake(parseInt(e.target.value))}
+                                style={{
+                                  width: "100%",
+                                  background: "var(--t-p06)",
+                                  border: "1.5px solid var(--t-input-border)",
+                                  borderRadius: 7,
+                                  padding: "6px 4px",
+                                  color: "var(--t-primary)",
+                                  fontSize: 13,
+                                  fontFamily: "inherit",
+                                  outline: "none",
+                                }}
+                              >
+                                {Array.from({ length: 24 }, (_, i) => i).map((h) => (
+                                  <option key={h} value={h}>{String(h).padStart(2, "0")}:00</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <label style={{ display: "block", fontSize: 10, color: "var(--t-time)", fontWeight: 600, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>Sleep</label>
+                              <select
+                                value={tempSleep}
+                                onChange={(e) => setTempSleep(parseInt(e.target.value))}
+                                style={{
+                                  width: "100%",
+                                  background: "var(--t-p06)",
+                                  border: "1.5px solid var(--t-input-border)",
+                                  borderRadius: 7,
+                                  padding: "6px 4px",
+                                  color: "var(--t-primary)",
+                                  fontSize: 13,
+                                  fontFamily: "inherit",
+                                  outline: "none",
+                                }}
+                              >
+                                {Array.from({ length: 24 }, (_, i) => i).map((h) => (
+                                  <option key={h} value={h}>{String(h).padStart(2, "0")}:00</option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+                          <div style={{ fontSize: 10, color: "var(--t-time)", marginBottom: 12 }}>
+                            {buildHoursRange(tempWake, tempSleep).length - 1}h shown
+                          </div>
+                          <div style={{ display: "flex", gap: 8 }}>
+                            <button
+                              onClick={() => setShowSettings(false)}
+                              style={{ flex: 1, padding: "7px 0", borderRadius: 7, border: "1.5px solid var(--t-input-border)", background: "transparent", color: "var(--t-muted)", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={applySettings}
+                              style={{ flex: 1, padding: "7px 0", borderRadius: 7, border: "none", background: "var(--t-primary)", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
+                            >
+                              Apply
+                            </button>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() => void resetScheduleStatuses()}
+                    title="Reset schedule statuses"
                     style={{
-                      position: "absolute",
-                      top: "calc(100% + 8px)",
-                      right: 0,
-                      background: "var(--t-panel)",
-                      border: "1.5px solid var(--t-input-border)",
-                      borderRadius: 12,
-                      padding: 16,
-                      boxShadow: "0 8px 24px var(--t-p18)",
-                      zIndex: 200,
-                      minWidth: 200,
+                      width: 32,
+                      height: 32,
+                      borderRadius: 8,
+                      border: "1px solid rgba(192,57,43,0.32)",
+                      background: "rgba(192,57,43,0.08)",
+                      color: "#c0392b",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      cursor: "pointer",
+                      padding: 0,
                     }}
                   >
-                    <div style={{ fontSize: 12, fontWeight: 700, color: "var(--t-primary)", marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                      Hours
-                    </div>
-                    <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
-                      <div style={{ flex: 1 }}>
-                        <label style={{ display: "block", fontSize: 10, color: "var(--t-time)", fontWeight: 600, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>Wake</label>
-                        <select
-                          value={tempWake}
-                          onChange={(e) => setTempWake(parseInt(e.target.value))}
-                          style={{
-                            width: "100%",
-                            background: "var(--t-p06)",
-                            border: "1.5px solid var(--t-input-border)",
-                            borderRadius: 7,
-                            padding: "6px 4px",
-                            color: "var(--t-primary)",
-                            fontSize: 13,
-                            fontFamily: "inherit",
-                            outline: "none",
-                          }}
-                        >
-                          {Array.from({ length: 24 }, (_, i) => i).map((h) => (
-                            <option key={h} value={h}>{String(h).padStart(2, "0")}:00</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <label style={{ display: "block", fontSize: 10, color: "var(--t-time)", fontWeight: 600, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>Sleep</label>
-                        <select
-                          value={tempSleep}
-                          onChange={(e) => setTempSleep(parseInt(e.target.value))}
-                          style={{
-                            width: "100%",
-                            background: "var(--t-p06)",
-                            border: "1.5px solid var(--t-input-border)",
-                            borderRadius: 7,
-                            padding: "6px 4px",
-                            color: "var(--t-primary)",
-                            fontSize: 13,
-                            fontFamily: "inherit",
-                            outline: "none",
-                          }}
-                        >
-                          {Array.from({ length: 24 }, (_, i) => i).map((h) => (
-                            <option key={h} value={h}>{String(h).padStart(2, "0")}:00</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                    <div style={{ fontSize: 10, color: "var(--t-time)", marginBottom: 12 }}>
-                      {buildHoursRange(tempWake, tempSleep).length - 1}h shown
-                    </div>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <button
-                        onClick={() => setShowSettings(false)}
-                        style={{ flex: 1, padding: "7px 0", borderRadius: 7, border: "1.5px solid var(--t-input-border)", background: "transparent", color: "var(--t-muted)", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={applySettings}
-                        style={{ flex: 1, padding: "7px 0", borderRadius: 7, border: "none", background: "var(--t-primary)", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
-                      >
-                        Apply
-                      </button>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="23 4 23 10 17 10" />
+                      <polyline points="1 20 1 14 7 14" />
+                      <path d="M3.51 9a9 9 0 0 1 14.13-3.36L23 10M1 14l5.36 4.36A9 9 0 0 0 20.49 15" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
 
-          <div
-            onMouseDown={startReset}
-            onMouseUp={cancelReset}
-            onMouseLeave={cancelReset}
-            onTouchStart={startReset}
-            onTouchEnd={cancelReset}
-            style={{
-              position: "relative",
-              overflow: "hidden",
-              padding: "6px 14px",
-              borderRadius: 8,
-              border: "1px solid rgba(192,57,43,0.35)",
-              background: "rgba(192,57,43,0.08)",
-              color: "#c0392b",
-              fontSize: "0.8rem",
-              fontWeight: 600,
-              cursor: "pointer",
-              userSelect: "none",
-              fontFamily: "inherit",
-            }}
-          >
-            <div
-              style={{
-                position: "absolute",
-                left: 0,
-                top: 0,
-                bottom: 0,
-                width: resetting ? "100%" : "0%",
-                background: "rgba(192,57,43,0.85)",
-                transition: resetting ? "width 1s linear" : "width 0.2s",
-                zIndex: 1,
-              }}
-            />
-            <span style={{ position: "relative", zIndex: 2, color: resetting ? "#fff" : "#c0392b" }}>
-              {resetting ? "Hold…" : "Hold to Reset"}
-            </span>
+              <ScheduleGrid
+                events={events}
+                entries={entries}
+                allComplete={allComplete}
+                calHours={calHours}
+                calStartHours={calStartHours}
+                onGridClick={(hour) => setEditor({ event: null, defaultHour: hour })}
+                onEventEdit={(evt) => setEditor({ event: evt, defaultHour: evt.start_hour })}
+                onEventContextMenu={(evt, x, y) => setContextMenu({ event: evt, x, y })}
+              />
+            </div>
           </div>
+
+          <div className="schedule-right">
+            {habits.length === 0 ? (
+              <div style={{ textAlign: "center", color: "var(--t-muted)", marginTop: 60, fontSize: "1rem" }}>
+                <p>No habits yet.</p>
+                <button
+                  onClick={async () => {
+                    const { data } = await supabase
+                      .from("habits")
+                      .insert({ user_id: user.id, title: "", group_end: false, sort_order: 0 })
+                      .select()
+                      .single()
+                    if (data) setHabits([data as Habit])
+                  }}
+                  style={{
+                    marginTop: 12,
+                    padding: "10px 24px",
+                    borderRadius: 10,
+                    border: "none",
+                    background: "var(--t-primary)",
+                    color: "#fff",
+                    fontWeight: 600,
+                    fontSize: "1rem",
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                  }}
+                >
+                  Add your first habit
+                </button>
+              </div>
+            ) : (
+              <HabitList
+                habits={habits}
+                entries={habitEntries}
+                userId={user.id}
+                today={today}
+                dateLabel={dateLabel}
+                headerLabel="Habits"
+                showDateLabel={false}
+                onHabitsChange={setHabits}
+                onEntriesChange={setHabitEntries}
+              />
+            )}
           </div>
         </div>
-
-        <ScheduleGrid
-          events={events}
-          entries={entries}
-          allComplete={allComplete}
-          calHours={calHours}
-          calStartHours={calStartHours}
-          onGridClick={(hour) => setEditor({ event: null, defaultHour: hour })}
-          onEventEdit={(evt) => setEditor({ event: evt, defaultHour: evt.start_hour })}
-          onEventContextMenu={(evt, x, y) => setContextMenu({ event: evt, x, y })}
-        />
       </div>
 
       {contextMenu && (

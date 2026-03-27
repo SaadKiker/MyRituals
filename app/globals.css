@@ -130,6 +130,39 @@ html, body {
   margin-bottom: 16px;
   gap: 8px;
 }
+
+/* ── Schedule page: calendar + habits split ── */
+.schedule-shell {
+  max-width: 1240px;
+}
+.schedule-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(330px, 32vw, 390px);
+  align-items: start;
+  column-gap: clamp(28px, 3.6vw, 56px);
+  row-gap: 18px;
+}
+.schedule-left {
+  min-width: 0;
+}
+.schedule-right {
+  min-width: 0;
+}
+.schedule-calendar {
+  max-width: 700px;
+}
+@media (max-width: 1024px) {
+  .schedule-shell {
+    max-width: 1080px;
+  }
+  .schedule-split {
+    grid-template-columns: minmax(0, 1fr) clamp(300px, 35vw, 360px);
+    column-gap: 26px;
+  }
+  .schedule-calendar {
+    max-width: 660px;
+  }
+}
 @media (max-width: 480px) {
   .schedule-header {
     flex-wrap: wrap;
@@ -140,5 +173,13 @@ html, body {
   .schedule-header-controls {
     width: 100%;
     justify-content: space-between;
+  }
+  .schedule-split {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .schedule-right {
+    width: 100%;
   }
 }

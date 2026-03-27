@@ -28,7 +28,7 @@ const DATE_LABEL: React.CSSProperties = {
   margin: "0 0 11px",
 }
 
-// ─── Habits card ──────────────────────────────────────────────────────────────
+// ─── Today card (habits + day plan) ──────────────────────────────────────────
 
 const HABITS = [
   { label: "Morning run", done: true  },
@@ -37,7 +37,7 @@ const HABITS = [
   { label: "Journal",     done: false },
 ]
 
-function HabitsCard() {
+function TodayCard() {
   return (
     <div style={CARD}>
       <p style={DATE_LABEL}>Monday · March 23</p>
@@ -83,7 +83,7 @@ function HabitsCard() {
   )
 }
 
-// ─── Schedule card ────────────────────────────────────────────────────────────
+// ─── Tasks card ───────────────────────────────────────────────────────────────
 
 const HOURS = ["07:00", "08:00", "09:00", "10:00", "11:00"]
 const H = 34 // px per hour slot
@@ -94,36 +94,38 @@ const EVENTS = [
   { title: "Lunch",        start: 4, span: 1, color: "#4a9070" },
 ]
 
-function ScheduleCard() {
+const TASK_LISTS = [
+  { title: "Work", count: 5 },
+  { title: "Personal", count: 3 },
+  { title: "Studies", count: 2 },
+]
+
+function TasksCard() {
   return (
     <div style={CARD}>
-      <p style={DATE_LABEL}>Monday · March 23</p>
-      <div style={{ position: "relative" }}>
-        {HOURS.map((h) => (
-          <div key={h} style={{ height: H, display: "flex", alignItems: "flex-start", borderTop: "1px solid var(--t-progress)" }}>
-            <span style={{ fontSize: "0.58rem", fontWeight: 600, color: "var(--t-icon)", width: 34, paddingTop: 3, flexShrink: 0 }}>{h}</span>
-          </div>
-        ))}
-        {EVENTS.map(({ title, start, span, color }) => (
-          <div key={title} style={{
-            position: "absolute",
-            top: start * H + 1,
-            left: 34,
-            right: 0,
-            height: span * H - 3,
-            background: color,
-            borderRadius: 7,
-            borderLeft: "3px solid rgba(0,0,0,0.18)",
-            padding: "4px 8px",
-            color: "#fff",
-            fontSize: "0.72rem",
-            fontWeight: 600,
-            overflow: "hidden",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.14)",
-            display: "flex",
-            alignItems: "center",
-          }}>
-            {title}
+      <p style={DATE_LABEL}>Task lists</p>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {TASK_LISTS.map((list, idx) => (
+          <div
+            key={list.title}
+            style={{
+              minHeight: 58,
+              borderRadius: 11,
+              border: idx === 2 ? "2px solid rgba(234,179,8,0.55)" : "1.5px solid var(--t-border)",
+              background: idx === 2 ? "#fef9c3" : "#fff",
+              padding: "10px 12px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              boxShadow: idx === 2 ? "0 6px 18px rgba(234,179,8,0.25)" : "0 2px 6px var(--t-p05)",
+            }}
+          >
+            <span style={{ fontSize: "0.88rem", fontWeight: 700, color: idx === 2 ? "#a16207" : "var(--t-primary)" }}>
+              {list.title}
+            </span>
+            <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "var(--t-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              {list.count} tasks
+            </span>
           </div>
         ))}
       </div>
@@ -182,9 +184,9 @@ function GoalsCard() {
 // ─── Carousel ─────────────────────────────────────────────────────────────────
 
 const SLIDES = [
-  { label: "Habits",   Card: HabitsCard   },
-  { label: "Schedule", Card: ScheduleCard },
-  { label: "Goals",    Card: GoalsCard    },
+  { label: "Today", Card: TodayCard },
+  { label: "Tasks", Card: TasksCard },
+  { label: "Goals", Card: GoalsCard },
 ]
 
 function MockupCarousel() {
@@ -374,7 +376,7 @@ export default function Home() {
                 lineHeight: 1.1,
                 margin: "0 0 18px",
               }}>
-                Your day,<br />beautifully<br />structured.
+                Your life,<br />beautifully structured.
               </h1>
 
               <p style={{
@@ -384,7 +386,7 @@ export default function Home() {
                 margin: "0 0 34px",
                 fontWeight: 400,
               }}>
-                Track your habits, plan your schedule,<br className="mobile-break" /> and reach your goals.<br className="mobile-break" /> All in one place.
+                Plan your day, work through your tasks, and track your goals,<br className="mobile-break" /> all in one focused, distraction-free space.
               </p>
 
               <div className="landing-cta">

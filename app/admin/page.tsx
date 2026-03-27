@@ -83,7 +83,7 @@ export default function AdminPage() {
                   ))}
                 </Section>
 
-                <Section title="Schedule">
+                <Section title="Today">
                   {userEvents.length === 0 ? <Empty /> : userEvents.map((e) => (
                     <div key={e.id} style={s.row}>
                       {String(e.start_hour).padStart(2, "0")}:00 – {String(e.end_hour).padStart(2, "0")}:00 · {e.title || "(untitled)"}
