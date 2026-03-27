@@ -72,7 +72,7 @@ html, body {
 /* ── Mobile: always show delete buttons on touch devices ── */
 @media (hover: none) {
   .habit-del-btn,
-  .goal-delete-btn {
+  .card-overflow-trigger {
     opacity: 1 !important;
   }
 }

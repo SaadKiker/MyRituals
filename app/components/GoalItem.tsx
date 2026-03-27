@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useEffect, useRef, useState, type HTMLAttributes } from "react"
 import { supabase } from "../lib/supabase"
+import CardOverflowMenu from "./CardOverflowMenu"
 
 export type Goal = {
   id: string
@@ -19,14 +20,20 @@ type Props = {
   onDelete: (id: string) => void
   onUpdate: (updated: Goal) => void
   sortableContainerRef?: (node: HTMLElement | null) => void
-  dragHandleProps?: Record<string, any>
+  dragHandleProps?: HTMLAttributes<HTMLDivElement>
 }
 
 export default function GoalItem({ goal, allComplete, onDelete, onUpdate, sortableContainerRef, dragHandleProps }: Props) {
-  const [title, setTitle] = useState(goal.title)
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [titleDraft, setTitleDraft] = useState("")
+  const titleInputRef = useRef<HTMLInputElement>(null)
   const [current, setCurrent] = useState(goal.current_value)
   const [target, setTarget] = useState(goal.target_value)
   const titleTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (editingTitle) titleInputRef.current?.focus()
+  }, [editingTitle])
 
   const pct = target > 0 ? Math.min(100, (current / target) * 100) : 0
   const done = target > 0 && current >= target
@@ -37,10 +44,19 @@ export default function GoalItem({ goal, allComplete, onDelete, onUpdate, sortab
     await supabase.from("goals").update({ current_value: newCurrent, target_value: newTarget }).eq("id", goal.id)
   }
 
-  async function saveTitle(val: string) {
+  async function flushTitleSave(val: string) {
+    if (titleTimer.current) {
+      clearTimeout(titleTimer.current)
+      titleTimer.current = null
+    }
     const updated = { ...goal, title: val }
     onUpdate(updated)
     await supabase.from("goals").update({ title: val }).eq("id", goal.id)
+  }
+
+  async function scheduleTitleSave(val: string) {
+    if (titleTimer.current) clearTimeout(titleTimer.current)
+    titleTimer.current = setTimeout(() => flushTitleSave(val), 600)
   }
 
   async function handleDelete() {
@@ -72,13 +88,28 @@ export default function GoalItem({ goal, allComplete, onDelete, onUpdate, sortab
   }
 
   return (
-    <div
-      style={cardStyle}
-      className="goal-card"
-      ref={sortableContainerRef}
-    >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-        {/* Drag handle */}
+    <div style={cardStyle} className="goal-card" ref={sortableContainerRef}>
+      {!editingTitle && (
+        <CardOverflowMenu
+          offsetTop={12}
+          offsetRight={12}
+          ariaLabel="Goal actions"
+          onRename={() => {
+            setTitleDraft(goal.title)
+            setEditingTitle(true)
+          }}
+          onDelete={handleDelete}
+        />
+      )}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 10,
+          paddingRight: 4,
+        }}
+      >
         <div
           {...dragHandleProps}
           style={{
@@ -100,44 +131,66 @@ export default function GoalItem({ goal, allComplete, onDelete, onUpdate, sortab
             <circle cx="8" cy="14" r="1.5" />
           </svg>
         </div>
-        <input
-          value={title}
-          onChange={(e) => {
-            setTitle(e.target.value)
-            if (titleTimer.current) clearTimeout(titleTimer.current)
-            titleTimer.current = setTimeout(() => saveTitle(e.target.value), 600)
-          }}
-          placeholder="Goal name..."
-          style={{
-            flex: 1,
-            border: "none",
-            background: "transparent",
-            fontSize: "0.95rem",
-            fontWeight: 500,
-            color: "var(--t-primary)",
-            fontFamily: "inherit",
-            padding: "2px 0",
-            marginRight: 8,
-            outline: "none",
-          }}
-        />
-        <button
-          onClick={handleDelete}
-          className="goal-delete-btn"
-          style={{
-            background: "transparent",
-            border: "none",
-            color: "var(--t-icon)",
-            fontSize: 18,
-            cursor: "pointer",
-            padding: "2px 4px",
-            lineHeight: 1,
-            opacity: 0,
-            transition: "opacity 0.2s",
-          }}
-        >
-          ×
-        </button>
+        {editingTitle ? (
+          <input
+            ref={titleInputRef}
+            value={titleDraft}
+            onChange={(e) => {
+              const v = e.target.value
+              setTitleDraft(v)
+              void scheduleTitleSave(v)
+            }}
+            onBlur={() => {
+              void flushTitleSave(titleDraft)
+              setEditingTitle(false)
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                e.preventDefault()
+                if (titleTimer.current) {
+                  clearTimeout(titleTimer.current)
+                  titleTimer.current = null
+                }
+                setEditingTitle(false)
+              }
+              if (e.key === "Enter") {
+                e.preventDefault()
+                void flushTitleSave(titleDraft)
+                setEditingTitle(false)
+              }
+            }}
+            placeholder="Goal name..."
+            style={{
+              flex: 1,
+              border: "none",
+              background: "transparent",
+              fontSize: "0.95rem",
+              fontWeight: 500,
+              color: "var(--t-primary)",
+              fontFamily: "inherit",
+              padding: "2px 0",
+              marginRight: 8,
+              outline: "none",
+            }}
+          />
+        ) : (
+          <div
+            style={{
+              flex: 1,
+              fontSize: "0.95rem",
+              fontWeight: 500,
+              color: "var(--t-primary)",
+              fontFamily: "inherit",
+              padding: "2px 0",
+              marginRight: 8,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {goal.title.trim() ? goal.title : <span style={{ color: "var(--t-muted)" }}>Goal name…</span>}
+          </div>
+        )}
       </div>
 
       <div style={{ background: "var(--t-progress)", height: 7, borderRadius: 4, overflow: "hidden", marginBottom: 12 }}>

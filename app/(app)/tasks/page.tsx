@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useRef, useState, type ReactNode } from "react"
-import { useRouter } from "next/navigation"
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import {
   DndContext,
   DragOverlay,
@@ -15,8 +15,10 @@ import {
 } from "@dnd-kit/core"
 import { SortableContext, arrayMove, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable"
 import { supabase } from "../../lib/supabase"
-import type { TaskList } from "../../lib/types"
+import type { Task, TaskList } from "../../lib/types"
+import CardOverflowMenu from "../../components/CardOverflowMenu"
 import { COLORS, resolveColor, spaceCardBackground } from "../../components/ScheduleEvent"
+import TaskListPanel from "../../components/TaskListPanel"
 import { useAppUser } from "../layout"
 
 const ADD_LIST_ID = "__add_list__"
@@ -115,12 +117,19 @@ function AddListDropSlot({ children }: { children: ReactNode }) {
 
 export default function TasksPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const user = useAppUser()
   const [lists, setLists] = useState<TaskList[]>([])
   const [loading, setLoading] = useState(true)
-  const initialized = useRef(false)
+  const listsInitialized = useRef(false)
 
-  const [activeListId, setActiveListId] = useState<string | null>(null)
+  const [tasksByList, setTasksByList] = useState<Record<string, Task[]>>({})
+  const tasksByListRef = useRef<Record<string, Task[]>>({})
+  useLayoutEffect(() => {
+    tasksByListRef.current = tasksByList
+  })
+
+  const [draggingListId, setDraggingListId] = useState<string | null>(null)
   const [overListId, setOverListId] = useState<string | null>(null)
   const movedDuringDrag = useRef(false)
 
@@ -130,8 +139,8 @@ export default function TasksPage() {
   const [colorMenu, setColorMenu] = useState<{ listId: string; x: number; y: number } | null>(null)
 
   useEffect(() => {
-    if (initialized.current) return
-    initialized.current = true
+    if (listsInitialized.current) return
+    listsInitialized.current = true
     ;(async () => {
       const { data } = await supabase
         .from("task_lists")
@@ -143,12 +152,80 @@ export default function TasksPage() {
     })()
   }, [user.id])
 
+  const selectedListId = useMemo(() => {
+    if (!lists.length) return null
+    const q = searchParams.get("list")
+    if (q && lists.some((l) => l.id === q)) return q
+    return lists[0].id
+  }, [lists, searchParams])
+
+  useEffect(() => {
+    if (loading) return
+    if (!lists.length) {
+      if (searchParams.get("list")) router.replace("/tasks", { scroll: false })
+      return
+    }
+    const q = searchParams.get("list")
+    const valid = q && lists.some((l) => l.id === q)
+    const wanted = valid ? q! : lists[0].id
+    if (searchParams.get("list") !== wanted) {
+      router.replace(`/tasks?list=${wanted}`, { scroll: false })
+    }
+  }, [lists, loading, searchParams, router])
+
   useEffect(() => {
     if (!colorMenu) return
     const close = () => setColorMenu(null)
     document.addEventListener("click", close)
     return () => document.removeEventListener("click", close)
   }, [colorMenu])
+
+  useEffect(() => {
+    if (!selectedListId) return
+    if (tasksByListRef.current[selectedListId] !== undefined) return
+    let cancelled = false
+    ;(async () => {
+      const { data } = await supabase
+        .from("tasks")
+        .select("*")
+        .eq("task_list_id", selectedListId)
+        .eq("user_id", user.id)
+        .order("sort_order", { ascending: true })
+      if (cancelled) return
+      setTasksByList((prev) => ({ ...prev, [selectedListId]: (data ?? []) as Task[] }))
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [selectedListId, user.id])
+
+  const prefetchTasks = useCallback((listId: string) => {
+    if (tasksByListRef.current[listId] !== undefined) return
+    void supabase
+      .from("tasks")
+      .select("*")
+      .eq("task_list_id", listId)
+      .eq("user_id", user.id)
+      .order("sort_order", { ascending: true })
+      .then(({ data }) => {
+        setTasksByList((prev) => {
+          if (prev[listId] !== undefined) return prev
+          return { ...prev, [listId]: (data ?? []) as Task[] }
+        })
+      })
+  }, [user.id])
+
+  function selectList(listId: string) {
+    router.replace(`/tasks?list=${listId}`, { scroll: false })
+  }
+
+  const patchTasksForList = useCallback((listId: string, updater: Task[] | ((prev: Task[]) => Task[])) => {
+    setTasksByList((prev) => {
+      const current = prev[listId] ?? []
+      const next = typeof updater === "function" ? updater(current) : updater
+      return { ...prev, [listId]: next }
+    })
+  }, [])
 
   async function persistOrder(updated: TaskList[]) {
     try {
@@ -167,7 +244,12 @@ export default function TasksPage() {
       .insert({ user_id: user.id, title: "New List", sort_order: newSortOrder })
       .select()
       .single()
-    if (data) setLists((prev) => [...prev, data as TaskList])
+    if (data) {
+      const row = data as TaskList
+      setLists((prev) => [...prev, row])
+      setTasksByList((prev) => ({ ...prev, [row.id]: [] }))
+      selectList(row.id)
+    }
   }
 
   async function saveTitle(listId: string) {
@@ -178,9 +260,19 @@ export default function TasksPage() {
   }
 
   async function deleteListConfirmed(listId: string) {
-    setLists((prev) => prev.filter((l) => l.id !== listId))
+    const remaining = lists.filter((l) => l.id !== listId)
+    setLists(remaining)
+    setTasksByList((prev) => {
+      const next = { ...prev }
+      delete next[listId]
+      return next
+    })
     await supabase.from("task_lists").delete().eq("id", listId)
     setDeleteConfirmListId(null)
+    if (selectedListId === listId) {
+      if (remaining.length) selectList(remaining[0].id)
+      else router.replace("/tasks", { scroll: false })
+    }
   }
 
   async function saveListCardColor(listId: string, color: string | null) {
@@ -190,12 +282,12 @@ export default function TasksPage() {
   }
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
-  const visibleLists = activeListId ? lists.filter((l) => l.id !== activeListId) : lists
-  const activeDragList = activeListId ? lists.find((l) => l.id === activeListId) : null
+  const visibleLists = draggingListId ? lists.filter((l) => l.id !== draggingListId) : lists
+  const activeDragList = draggingListId ? lists.find((l) => l.id === draggingListId) : null
 
   function handleDragStart(event: DragStartEvent) {
     movedDuringDrag.current = false
-    setActiveListId(String(event.active.id))
+    setDraggingListId(String(event.active.id))
   }
 
   function handleDragOver(event: DragOverEvent) {
@@ -210,7 +302,7 @@ export default function TasksPage() {
     const activeId = String(event.active.id)
     const overId = event.over?.id ? String(event.over.id) : null
 
-    setActiveListId(null)
+    setDraggingListId(null)
     setOverListId(null)
     setTimeout(() => {
       movedDuringDrag.current = false
@@ -226,250 +318,280 @@ export default function TasksPage() {
     await persistOrder(updated)
   }
 
+  const panelTasks = selectedListId ? tasksByList[selectedListId] : undefined
+  const panelLoading = Boolean(selectedListId && panelTasks === undefined)
+
   if (loading) return null
 
   return (
     <div
+      className="tasks-split"
       style={{
-        maxWidth: 640,
+        maxWidth: 1100,
         margin: "90px auto 0",
         padding: "0 20px 20px",
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 24,
       }}
     >
-      <DndContext
-        sensors={sensors}
-        onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
-        onDragCancel={() => {
-          setActiveListId(null)
-          setOverListId(null)
-          setTimeout(() => {
-            movedDuringDrag.current = false
-          }, 0)
+      <aside
+        style={{
+          flex: "0 0 280px",
+          minWidth: 0,
+          position: "sticky",
+          top: 88,
+          alignSelf: "flex-start",
         }}
-        onDragEnd={(e) => void handleDragEnd(e)}
       >
-        <SortableContext items={visibleLists.map((l) => l.id)} strategy={verticalListSortingStrategy}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-            {visibleLists.map((list) => {
-              const showPlaceholder = activeListId !== null && overListId === list.id
-              return (
-                <div key={list.id} style={{ display: "contents" }}>
-                  {showPlaceholder && (
-                    <div
-                      className="tasklist-drop-placeholder"
-                      style={{
-                        minHeight: 96,
-                        borderRadius: 18,
-                        border: "2px dashed var(--t-p30)",
-                        background: "var(--t-p05)",
-                      }}
-                    />
-                  )}
+        <DndContext
+          sensors={sensors}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDragCancel={() => {
+            setDraggingListId(null)
+            setOverListId(null)
+            setTimeout(() => {
+              movedDuringDrag.current = false
+            }, 0)
+          }}
+          onDragEnd={(e) => void handleDragEnd(e)}
+        >
+          <SortableContext items={visibleLists.map((l) => l.id)} strategy={verticalListSortingStrategy}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+              {visibleLists.map((list) => {
+                const showPlaceholder = draggingListId !== null && overListId === list.id
+                const isSelected = list.id === selectedListId
+                const isDimmed = !isSelected && editingTitleId !== list.id
+                return (
+                  <div key={list.id} style={{ display: "contents" }}>
+                    {showPlaceholder && (
+                      <div
+                        className="tasklist-drop-placeholder"
+                        style={{
+                          minHeight: 96,
+                          borderRadius: 18,
+                          border: "2px dashed var(--t-p30)",
+                          background: "var(--t-p05)",
+                        }}
+                      />
+                    )}
 
-                  <SortableListCard
-                    id={list.id}
-                    onClick={() => {
-                      if (movedDuringDrag.current || editingTitleId === list.id) return
-                      router.push(`/tasks/${list.id}`)
-                    }}
-                  >
-                    <div
-                      className="tasklist-card"
-                      onContextMenu={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        setColorMenu({ listId: list.id, x: e.clientX, y: e.clientY })
-                      }}
-                      style={{
-                        textAlign: "center",
-                        minHeight: 96,
-                        borderRadius: 18,
-                        border: "1.5px solid var(--t-border)",
-                        background: spaceCardBackground(list.card_color),
-                        boxShadow: "0 8px 20px var(--t-p08)",
-                        padding: "20px",
-                        cursor: "pointer",
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        opacity: 1,
-                        transform: "scale(1)",
-                        transition: "box-shadow 0.2s, border-color 0.2s, background 0.2s",
-                        fontFamily: "inherit",
-                        position: "relative",
-                        boxSizing: "border-box",
+                    <SortableListCard
+                      id={list.id}
+                      onClick={() => {
+                        if (movedDuringDrag.current || editingTitleId === list.id) return
+                        selectList(list.id)
                       }}
                     >
-                      {editingTitleId === list.id ? (
-                        <input
-                          value={titleDraft}
-                          onChange={(e) => setTitleDraft(e.target.value)}
-                          onClick={(e) => e.stopPropagation()}
-                          onMouseDown={(e) => e.stopPropagation()}
-                          onBlur={() => void saveTitle(list.id)}
-                          onKeyDown={(e) => {
-                            e.stopPropagation()
-                            if (e.key === "Enter") {
-                              e.preventDefault()
-                              void saveTitle(list.id)
-                            }
-                            if (e.key === "Escape") setEditingTitleId(null)
-                          }}
-                          autoFocus
-                          style={{
-                            fontSize: "1.55rem",
-                            fontWeight: 800,
-                            color: "var(--t-primary)",
-                            lineHeight: 1.35,
-                            border: "1px solid var(--t-input-border)",
-                            borderRadius: 10,
-                            padding: "6px 10px",
-                            background: "#fff",
-                            outline: "none",
-                            fontFamily: "inherit",
-                            width: "100%",
-                            textAlign: "center",
-                            boxSizing: "border-box",
-                          }}
-                        />
-                      ) : (
-                        <div
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setEditingTitleId(list.id)
-                            setTitleDraft(list.title || "")
-                          }}
-                          style={{
-                            fontSize: "1.55rem",
-                            fontWeight: 800,
-                            color: "var(--t-muted)",
-                            lineHeight: 1.35,
-                            maxWidth: "100%",
-                            transition: "color 0.18s ease",
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                          }}
-                        >
-                          {list.title || "Untitled List"}
-                        </div>
-                      )}
-
-                      <button
-                        onClick={(e) => {
+                      <div
+                        className={`tasklist-card ${isSelected ? "tasklist-card--selected" : ""} ${isDimmed ? "tasklist-card--dim" : ""}`}
+                        onContextMenu={(e) => {
                           e.preventDefault()
                           e.stopPropagation()
-                          setDeleteConfirmListId(list.id)
+                          setColorMenu({ listId: list.id, x: e.clientX, y: e.clientY })
                         }}
-                        onMouseDown={(e) => e.stopPropagation()}
+                        onMouseEnter={() => prefetchTasks(list.id)}
                         style={{
-                          position: "absolute",
-                          top: 14,
-                          right: 14,
-                          width: 28,
-                          height: 28,
-                          borderRadius: 8,
-                          border: "1px solid transparent",
-                          background: "transparent",
-                          color: "var(--t-muted)",
+                          textAlign: "center",
+                          minHeight: 96,
+                          borderRadius: 18,
+                          border: isSelected ? "2px solid var(--t-primary)" : "1.5px solid var(--t-border)",
+                          background: spaceCardBackground(list.card_color),
+                          boxShadow: isSelected ? "0 10px 28px var(--t-p12)" : "0 8px 20px var(--t-p08)",
+                          padding: "20px",
                           cursor: "pointer",
-                          fontSize: 14,
-                          lineHeight: 1,
                           display: "flex",
+                          flexDirection: "column",
                           alignItems: "center",
                           justifyContent: "center",
-                          opacity: 0.38,
-                          transition: "opacity 0.2s, color 0.2s",
+                          transform: "scale(1)",
+                          fontFamily: "inherit",
+                          position: "relative",
+                          boxSizing: "border-box",
                         }}
-                        title="Delete List"
                       >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="3 6 5 6 21 6" />
-                          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                          <path d="M10 11v6M14 11v6" />
-                          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                        </svg>
-                      </button>
-                    </div>
-                  </SortableListCard>
-                </div>
-              )
-            })}
+                        {editingTitleId === list.id ? (
+                          <input
+                            value={titleDraft}
+                            onChange={(e) => setTitleDraft(e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onBlur={() => void saveTitle(list.id)}
+                            onKeyDown={(e) => {
+                              e.stopPropagation()
+                              if (e.key === "Enter") {
+                                e.preventDefault()
+                                void saveTitle(list.id)
+                              }
+                              if (e.key === "Escape") setEditingTitleId(null)
+                            }}
+                            autoFocus
+                            style={{
+                              fontSize: "1.55rem",
+                              fontWeight: 800,
+                              color: "var(--t-primary)",
+                              lineHeight: 1.35,
+                              border: "1px solid var(--t-input-border)",
+                              borderRadius: 10,
+                              padding: "6px 10px",
+                              background: "#fff",
+                              outline: "none",
+                              fontFamily: "inherit",
+                              width: "100%",
+                              textAlign: "center",
+                              boxSizing: "border-box",
+                            }}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              fontSize: "1.55rem",
+                              fontWeight: 800,
+                              color: "var(--t-muted)",
+                              lineHeight: 1.35,
+                              maxWidth: "100%",
+                              transition: "color 0.18s ease",
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                          >
+                            {list.title || "Untitled List"}
+                          </div>
+                        )}
 
-            {activeListId && overListId === ADD_LIST_ID && (
-              <div
-                className="tasklist-drop-placeholder"
-                style={{
-                  minHeight: 96,
-                  borderRadius: 18,
-                  border: "2px dashed var(--t-p30)",
-                  background: "var(--t-p05)",
-                }}
-              />
-            )}
+                        {editingTitleId !== list.id && (
+                          <CardOverflowMenu
+                            ariaLabel="List actions"
+                            onRename={() => {
+                              setEditingTitleId(list.id)
+                              setTitleDraft(list.title || "")
+                            }}
+                            onDelete={() => setDeleteConfirmListId(list.id)}
+                          />
+                        )}
+                      </div>
+                    </SortableListCard>
+                  </div>
+                )
+              })}
 
-            <AddListDropSlot>
-              <div
-                style={{
-                  width: "100%",
-                  minHeight: 96,
-                  boxSizing: "border-box",
-                  padding: "20px",
-                  borderRadius: 18,
-                  border: "2px dashed var(--t-p30)",
-                  background: "transparent",
-                  color: "var(--t-muted)",
-                  fontWeight: 700,
-                  fontSize: "1.1rem",
-                  fontFamily: "inherit",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  textAlign: "center",
-                  transition: "color 0.2s, border-color 0.2s",
-                }}
-              >
-                <button
-                  onClick={addList}
+              {draggingListId && overListId === ADD_LIST_ID && (
+                <div
+                  className="tasklist-drop-placeholder"
                   style={{
+                    minHeight: 96,
+                    borderRadius: 18,
+                    border: "2px dashed var(--t-p30)",
+                    background: "var(--t-p05)",
+                  }}
+                />
+              )}
+
+              <AddListDropSlot>
+                <div
+                  style={{
+                    width: "100%",
+                    minHeight: 96,
+                    boxSizing: "border-box",
+                    padding: "20px",
+                    borderRadius: 18,
+                    border: "2px dashed var(--t-p30)",
                     background: "transparent",
-                    border: "none",
                     color: "var(--t-muted)",
                     fontWeight: 700,
                     fontSize: "1.1rem",
-                    cursor: "pointer",
                     fontFamily: "inherit",
-                    padding: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    textAlign: "center",
+                    transition: "color 0.2s, border-color 0.2s",
                   }}
-                  onMouseEnter={(e) => {
-                    ;(e.currentTarget as HTMLButtonElement).style.color = "var(--t-primary)"
-                  }}
-                  onMouseLeave={(e) => {
-                    ;(e.currentTarget as HTMLButtonElement).style.color = "var(--t-muted)"
-                  }}
-                  title="Add List"
                 >
-                  + Add List
-                </button>
-              </div>
-            </AddListDropSlot>
-          </div>
-        </SortableContext>
+                  <button
+                    onClick={addList}
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      color: "var(--t-muted)",
+                      fontWeight: 700,
+                      fontSize: "1.1rem",
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                      padding: 0,
+                    }}
+                    onMouseEnter={(e) => {
+                      ;(e.currentTarget as HTMLButtonElement).style.color = "var(--t-primary)"
+                    }}
+                    onMouseLeave={(e) => {
+                      ;(e.currentTarget as HTMLButtonElement).style.color = "var(--t-muted)"
+                    }}
+                    title="Add List"
+                  >
+                    + Add List
+                  </button>
+                </div>
+              </AddListDropSlot>
+            </div>
+          </SortableContext>
 
-        <DragOverlay dropAnimation={{ duration: 200, easing: "ease" }}>
-          {activeDragList ? <ListDragGhost list={activeDragList} /> : null}
-        </DragOverlay>
-      </DndContext>
+          <DragOverlay dropAnimation={{ duration: 200, easing: "ease" }}>
+            {activeDragList ? <ListDragGhost list={activeDragList} /> : null}
+          </DragOverlay>
+        </DndContext>
+      </aside>
+
+      <main style={{ flex: 1, minWidth: 0 }}>
+        {!lists.length ? (
+          <p style={{ color: "var(--t-muted)", fontSize: "0.95rem", margin: 0 }}>No lists yet. Add one from the sidebar.</p>
+        ) : selectedListId ? (
+          panelLoading ? null : panelTasks !== undefined ? (
+            <TaskListPanel
+              key={selectedListId}
+              listId={selectedListId}
+              userId={user.id}
+              tasks={panelTasks}
+              onTasksChange={(updater) => patchTasksForList(selectedListId, updater)}
+            />
+          ) : null
+        ) : null}
+      </main>
 
       <style>{`
+        .tasklist-card {
+          transition: box-shadow 0.2s, border-color 0.2s, background 0.2s, opacity 0.22s ease;
+        }
+        .tasklist-card--dim {
+          opacity: 0.62;
+          filter: saturate(0.9);
+        }
+        .tasklist-card--dim:hover {
+          opacity: 0.9;
+          filter: none;
+        }
+        .tasklist-card--selected {
+          opacity: 1;
+        }
         .tasklist-card:hover {
           box-shadow: 0 12px 26px var(--t-p12);
         }
-        .tasklist-card:hover button[title="Delete List"] {
-          opacity: 1;
+        .tasklist-card:hover .card-overflow-trigger {
+          opacity: 1 !important;
+        }
+        @media (max-width: 820px) {
+          .tasks-split {
+            flex-direction: column !important;
+            align-items: stretch !important;
+          }
+          .tasks-split aside {
+            position: relative !important;
+            top: auto !important;
+            flex: 1 1 auto !important;
+            width: 100% !important;
+          }
         }
       `}</style>
 
@@ -634,4 +756,3 @@ export default function TasksPage() {
     </div>
   )
 }
-

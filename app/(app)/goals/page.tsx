@@ -16,6 +16,7 @@ import {
 import { SortableContext, arrayMove, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable"
 import { supabase } from "../../lib/supabase"
 import type { GoalSetType } from "../../components/GoalSet"
+import CardOverflowMenu from "../../components/CardOverflowMenu"
 import { COLORS, resolveColor, spaceCardBackground } from "../../components/ScheduleEvent"
 import { useAppUser } from "../layout"
 
@@ -346,11 +347,6 @@ export default function GoalsPage() {
                       ) : (
                         <div
                           className="space-title"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setEditingTitleId(space.id)
-                            setTitleDraft(space.title || "")
-                          }}
                           style={{
                             fontSize: "1.75rem",
                             fontWeight: 800,
@@ -360,7 +356,7 @@ export default function GoalsPage() {
                             transition: "color 0.18s ease",
                             whiteSpace: "nowrap",
                             overflow: "hidden",
-                            textOverflow: "ellipsis"
+                            textOverflow: "ellipsis",
                           }}
                         >
                           {space.title || "Untitled Space"}
@@ -436,42 +432,18 @@ export default function GoalsPage() {
                         )}
                       </div>
 
-                      <button
-                        className="space-delete-btn"
-                        onClick={(e) => {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          setDeleteConfirmSpaceId(space.id)
-                        }}
-                        onMouseDown={(e) => e.stopPropagation()}
-                        style={{
-                          position: "absolute",
-                          top: 16,
-                          right: 16,
-                          width: 28,
-                          height: 28,
-                          borderRadius: 8,
-                          border: "1px solid transparent",
-                          background: "transparent",
-                          color: "var(--t-muted)",
-                          cursor: "pointer",
-                          fontSize: 14,
-                          lineHeight: 1,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          opacity: 0.38,
-                          transition: "opacity 0.2s, color 0.2s",
-                        }}
-                        title="Delete Space"
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="3 6 5 6 21 6" />
-                          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                          <path d="M10 11v6M14 11v6" />
-                          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                        </svg>
-                      </button>
+                      {editingTitleId !== space.id && (
+                        <CardOverflowMenu
+                          offsetTop={16}
+                          offsetRight={16}
+                          ariaLabel="Space actions"
+                          onRename={() => {
+                            setEditingTitleId(space.id)
+                            setTitleDraft(space.title || "")
+                          }}
+                          onDelete={() => setDeleteConfirmSpaceId(space.id)}
+                        />
+                      )}
                     </div>
                   </SortableSpaceCard>
                 </div>
@@ -547,11 +519,8 @@ export default function GoalsPage() {
         .space-card:hover {
           box-shadow: 0 12px 26px var(--t-p12);
         }
-        .space-card:hover button[title="Delete Space"] {
-          opacity: 1;
-        }
-        .space-delete-btn:hover {
-          color: #d92d20 !important;
+        .space-card:hover .card-overflow-trigger {
+          opacity: 1 !important;
         }
         .space-title:hover,
         .space-date-label:hover {

@@ -149,7 +149,7 @@ export default function SpaceGoalsList({ goalSetId, userId, initialGoals }: Prop
   return (
     <>
       <style>{`
-        .goal-card:hover .goal-delete-btn {
+        .goal-card:hover .card-overflow-trigger {
           opacity: 1 !important;
         }
       `}</style>
