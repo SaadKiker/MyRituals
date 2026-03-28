@@ -19,9 +19,11 @@ import type { Task, TaskList } from "../../lib/types"
 import CardOverflowMenu from "../../components/CardOverflowMenu"
 import { COLORS, resolveColor, spaceCardBackground } from "../../components/ScheduleEvent"
 import TaskListPanel from "../../components/TaskListPanel"
+import RemindersPanel from "../../components/RemindersPanel"
 import { useAppUser } from "../layout"
 
 const ADD_LIST_ID = "__add_list__"
+const REMINDERS_ID = "reminders"
 
 function ListDragGhost({ list }: { list: TaskList }) {
   return (
@@ -153,22 +155,24 @@ export default function TasksPage() {
   }, [user.id])
 
   const selectedListId = useMemo(() => {
-    if (!lists.length) return null
     const q = searchParams.get("list")
+    if (q === REMINDERS_ID) return REMINDERS_ID
+    if (!lists.length) return null
     if (q && lists.some((l) => l.id === q)) return q
     return lists[0].id
   }, [lists, searchParams])
 
   useEffect(() => {
     if (loading) return
+    const q = searchParams.get("list")
+    if (q === REMINDERS_ID) return
     if (!lists.length) {
-      if (searchParams.get("list")) router.replace("/tasks", { scroll: false })
+      if (q) router.replace("/tasks", { scroll: false })
       return
     }
-    const q = searchParams.get("list")
     const valid = q && lists.some((l) => l.id === q)
     const wanted = valid ? q! : lists[0].id
-    if (searchParams.get("list") !== wanted) {
+    if (q !== wanted) {
       router.replace(`/tasks?list=${wanted}`, { scroll: false })
     }
   }, [lists, loading, searchParams, router])
@@ -181,7 +185,7 @@ export default function TasksPage() {
   }, [colorMenu])
 
   useEffect(() => {
-    if (!selectedListId) return
+    if (!selectedListId || selectedListId === REMINDERS_ID) return
     if (tasksByListRef.current[selectedListId] !== undefined) return
     let cancelled = false
     ;(async () => {
@@ -344,6 +348,55 @@ export default function TasksPage() {
           alignSelf: "flex-start",
         }}
       >
+        {/* Pinned Reminders entry — compact row, visually distinct from list cards */}
+        <div
+          onClick={() => selectList(REMINDERS_ID)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault()
+              selectList(REMINDERS_ID)
+            }
+          }}
+          style={{
+            marginBottom: 10,
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            padding: "11px 16px",
+            borderRadius: 12,
+            border: "1.5px solid var(--t-primary)",
+            background: "var(--t-primary)",
+            boxShadow: selectedListId === REMINDERS_ID ? "0 6px 18px var(--t-p25)" : "0 2px 10px var(--t-p15)",
+            color: "#fff",
+            opacity: selectedListId === REMINDERS_ID ? 1 : 0.75,
+            fontFamily: "inherit",
+            transition: "background 0.18s, color 0.18s, border-color 0.18s, box-shadow 0.18s",
+          }}
+        >
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ flexShrink: 0, opacity: 0.8 }}
+          >
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+          <span style={{ fontSize: "0.9rem", fontWeight: 600, letterSpacing: "0.01em" }}>
+            Reminders
+          </span>
+        </div>
+
+        <div style={{ margin: "2px 4px 12px", height: 1, background: "var(--t-border)", borderRadius: 1 }} />
+
         <DndContext
           sensors={sensors}
           onDragStart={handleDragStart}
@@ -545,7 +598,9 @@ export default function TasksPage() {
       </aside>
 
       <main style={{ flex: 1, minWidth: 0 }}>
-        {!lists.length ? (
+        {selectedListId === REMINDERS_ID ? (
+          <RemindersPanel userId={user.id} />
+        ) : !lists.length ? (
           <p style={{ color: "var(--t-muted)", fontSize: "0.95rem", margin: 0 }}>No lists yet. Add one from the sidebar.</p>
         ) : selectedListId ? (
           panelLoading ? null : panelTasks !== undefined ? (

@@ -401,7 +401,7 @@ export default function Home() {
                   textDecoration: "none",
                   letterSpacing: "0.01em",
                 }}>
-                  Get started free
+                  Get started
                 </Link>
                 <Link href="/login" style={{
                   display: "inline-block",

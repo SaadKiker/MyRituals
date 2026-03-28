@@ -20,3 +20,10 @@ export type Task = {
   updated_at?: string
 }
 
+export type Reminder = {
+  id: string
+  user_id: string
+  title: string
+  remind_at: string // ISO date string
+  created_at?: string
+}
