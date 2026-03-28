@@ -14,6 +14,7 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core"
 import { SortableContext, arrayMove, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable"
+import { applySequentialSortOrders } from "../../lib/persistSortOrder"
 import { supabase } from "../../lib/supabase"
 import type { Task, TaskList } from "../../lib/types"
 import CardOverflowMenu from "../../components/CardOverflowMenu"
@@ -233,9 +234,9 @@ export default function TasksPage() {
 
   async function persistOrder(updated: TaskList[]) {
     try {
-      for (let i = 0; i < updated.length; i++) {
-        await supabase.from("task_lists").update({ sort_order: i }).eq("id", updated[i].id)
-      }
+      await applySequentialSortOrders(updated, async (id, sortOrder) =>
+        supabase.from("task_lists").update({ sort_order: sortOrder }).eq("id", id),
+      )
     } catch {
       // ignore
     }
@@ -245,7 +246,7 @@ export default function TasksPage() {
     const newSortOrder = lists.length
     const { data } = await supabase
       .from("task_lists")
-      .insert({ user_id: user.id, title: "New List", sort_order: newSortOrder })
+      .insert({ user_id: user.id, title: "", sort_order: newSortOrder })
       .select()
       .single()
     if (data) {
@@ -253,6 +254,8 @@ export default function TasksPage() {
       setLists((prev) => [...prev, row])
       setTasksByList((prev) => ({ ...prev, [row.id]: [] }))
       selectList(row.id)
+      setEditingTitleId(row.id)
+      setTitleDraft("")
     }
   }
 

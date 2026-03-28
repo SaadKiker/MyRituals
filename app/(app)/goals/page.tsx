@@ -86,6 +86,7 @@ export default function GoalsPage() {
   const [dateDraft, setDateDraft] = useState("")
   const [deleteConfirmSpaceId, setDeleteConfirmSpaceId] = useState<string | null>(null)
   const [colorMenu, setColorMenu] = useState<{ spaceId: string; x: number; y: number } | null>(null)
+  const menuActionRef = useRef(false)
 
   useEffect(() => {
     if (initialized.current) return
@@ -124,7 +125,7 @@ export default function GoalsPage() {
     const newSortOrder = spaces.length
     const { data: newSet } = await supabase
       .from("goal_sets")
-      .insert({ user_id: user.id, title: "New Space", target_date: null, sort_order: newSortOrder })
+      .insert({ user_id: user.id, title: "", target_date: null, sort_order: newSortOrder })
       .select()
       .single()
 
@@ -143,6 +144,8 @@ export default function GoalsPage() {
         .single()
 
       setSpaces((prev) => [...prev, { ...newSet, goals: newGoal ? [newGoal] : [] }])
+      setEditingTitleId(newSet.id)
+      setTitleDraft("")
     }
   }
 
@@ -278,6 +281,7 @@ export default function GoalsPage() {
                   <SortableSpaceCard
                     id={space.id}
                     onClick={() => {
+                      if (menuActionRef.current) { menuActionRef.current = false; return }
                       if (movedDuringDrag.current || editingTitleId === space.id || editingDateId === space.id) return
                       router.push(`/goals/${space.id}`)
                     }}
@@ -328,6 +332,7 @@ export default function GoalsPage() {
                             }
                           }}
                           autoFocus
+                          placeholder="Space name…"
                           style={{
                             fontSize: "1.75rem",
                             fontWeight: 800,
@@ -438,10 +443,14 @@ export default function GoalsPage() {
                           offsetRight={16}
                           ariaLabel="Space actions"
                           onRename={() => {
+                            menuActionRef.current = true
                             setEditingTitleId(space.id)
                             setTitleDraft(space.title || "")
                           }}
-                          onDelete={() => setDeleteConfirmSpaceId(space.id)}
+                          onDelete={() => {
+                            menuActionRef.current = true
+                            setDeleteConfirmSpaceId(space.id)
+                          }}
                         />
                       )}
                     </div>

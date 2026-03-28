@@ -43,15 +43,6 @@ export default function GoalSet({ goalSet, userId, onDelete, onUpdate, onDragSta
   const [draggingGoalId, setDraggingGoalId] = useState<string | null>(null)
   const [dropGoalIndex, setDropGoalIndex] = useState<number | null>(null)
 
-  function openDatePicker() {
-    if (!dateInputRef.current) return
-    try {
-      dateInputRef.current.showPicker()
-    } catch {
-      dateInputRef.current.click()
-    }
-  }
-
   const allComplete =
     goalSet.goals.length > 0 &&
     goalSet.goals.every((g) => g.target_value > 0 && g.current_value >= g.target_value)
@@ -204,11 +195,11 @@ export default function GoalSet({ goalSet, userId, onDelete, onUpdate, onDragSta
           }}
         />
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {/* Countdown Badge */}
+          {/* Countdown Badge — overlay input pattern (same as RemindersPanel date chip) */}
           <div
-            onClick={openDatePicker}
             style={{
-              display: "flex",
+              position: "relative",
+              display: "inline-flex",
               alignItems: "center",
               gap: 6,
               background: "var(--t-p08)",
@@ -223,10 +214,10 @@ export default function GoalSet({ goalSet, userId, onDelete, onUpdate, onDragSta
               userSelect: "none",
             }}
           >
-            <span style={{ fontSize: "1rem", fontWeight: 700 }}>
+            <span style={{ fontSize: "1rem", fontWeight: 700, pointerEvents: "none" }}>
               {daysLeft !== null ? daysLeft : "–"}
             </span>
-            <span style={{ opacity: 0.75, fontSize: "0.8rem" }}>
+            <span style={{ opacity: 0.75, fontSize: "0.8rem", pointerEvents: "none" }}>
               {daysLeft === 1 ? "day left" : daysLeft !== null ? "days left" : "set date"}
             </span>
             <input
@@ -235,12 +226,18 @@ export default function GoalSet({ goalSet, userId, onDelete, onUpdate, onDragSta
               value={dateValue}
               min={today}
               onChange={(e) => handleDateChange(e.target.value)}
+              className="goal-date-input"
               style={{
                 position: "absolute",
+                inset: 0,
                 opacity: 0,
-                width: 0,
-                height: 0,
-                pointerEvents: "none",
+                cursor: "pointer",
+                width: "100%",
+                height: "100%",
+                padding: 0,
+                margin: 0,
+                border: "none",
+                background: "transparent",
               }}
             />
           </div>
@@ -286,6 +283,17 @@ export default function GoalSet({ goalSet, userId, onDelete, onUpdate, onDragSta
           <div style={{ height: 3, borderRadius: 999, background: "var(--t-p60)", margin: "4px 0 0" }} />
         )}
       </div>
+
+      <style>{`
+        .goal-date-input::-webkit-calendar-picker-indicator {
+          opacity: 0;
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          cursor: pointer;
+        }
+      `}</style>
 
       {/* Add Goal Button */}
       <div

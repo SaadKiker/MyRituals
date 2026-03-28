@@ -16,6 +16,7 @@ export type Task = {
   description: string | null
   completed: boolean
   sort_order: number
+  group_end?: boolean
   created_at?: string
   updated_at?: string
 }

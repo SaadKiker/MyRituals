@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState, type HTMLAttributes } from "react"
 import { supabase } from "../lib/supabase"
-import CardOverflowMenu from "./CardOverflowMenu"
 
 export type Goal = {
   id: string
@@ -26,6 +25,7 @@ type Props = {
 export default function GoalItem({ goal, allComplete, onDelete, onUpdate, sortableContainerRef, dragHandleProps }: Props) {
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState("")
+  const [hovered, setHovered] = useState(false)
   const titleInputRef = useRef<HTMLInputElement>(null)
   const [current, setCurrent] = useState(goal.current_value)
   const [target, setTarget] = useState(goal.target_value)
@@ -88,26 +88,18 @@ export default function GoalItem({ goal, allComplete, onDelete, onUpdate, sortab
   }
 
   return (
-    <div style={cardStyle} className="goal-card" ref={sortableContainerRef}>
-      {!editingTitle && (
-        <CardOverflowMenu
-          offsetTop={12}
-          offsetRight={12}
-          ariaLabel="Goal actions"
-          onRename={() => {
-            setTitleDraft(goal.title)
-            setEditingTitle(true)
-          }}
-          onDelete={handleDelete}
-        />
-      )}
+    <div
+      style={cardStyle}
+      className="goal-card"
+      ref={sortableContainerRef}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
       <div
         style={{
           display: "flex",
-          justifyContent: "space-between",
           alignItems: "center",
           marginBottom: 10,
-          paddingRight: 4,
         }}
       >
         <div
@@ -159,7 +151,7 @@ export default function GoalItem({ goal, allComplete, onDelete, onUpdate, sortab
                 setEditingTitle(false)
               }
             }}
-            placeholder="Goal name..."
+            placeholder="Goal name…"
             style={{
               flex: 1,
               border: "none",
@@ -169,12 +161,12 @@ export default function GoalItem({ goal, allComplete, onDelete, onUpdate, sortab
               color: "var(--t-primary)",
               fontFamily: "inherit",
               padding: "2px 0",
-              marginRight: 8,
               outline: "none",
             }}
           />
         ) : (
           <div
+            onClick={() => { setTitleDraft(goal.title); setEditingTitle(true) }}
             style={{
               flex: 1,
               fontSize: "0.95rem",
@@ -182,15 +174,38 @@ export default function GoalItem({ goal, allComplete, onDelete, onUpdate, sortab
               color: "var(--t-primary)",
               fontFamily: "inherit",
               padding: "2px 0",
-              marginRight: 8,
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
+              cursor: "text",
             }}
           >
             {goal.title.trim() ? goal.title : <span style={{ color: "var(--t-muted)" }}>Goal name…</span>}
           </div>
         )}
+        <button
+          type="button"
+          onClick={() => void handleDelete()}
+          className="goal-del-btn"
+          style={{
+            background: "transparent",
+            border: "none",
+            color: "var(--t-icon)",
+            fontSize: 18,
+            cursor: "pointer",
+            padding: "2px 3px",
+            lineHeight: 1,
+            opacity: hovered ? 1 : 0,
+            transition: "opacity 0.15s",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+          title="Delete goal"
+        >
+          ×
+        </button>
       </div>
 
       <div style={{ background: "var(--t-progress)", height: 7, borderRadius: 4, overflow: "hidden", marginBottom: 12 }}>

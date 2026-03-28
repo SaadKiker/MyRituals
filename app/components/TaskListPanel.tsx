@@ -2,6 +2,7 @@
 
 import { useRef, useState, type ReactNode } from "react"
 import {
+  closestCenter,
   DndContext,
   DragOverlay,
   PointerSensor,
@@ -15,6 +16,7 @@ import {
   type DraggableSyntheticListeners,
 } from "@dnd-kit/core"
 import { SortableContext, arrayMove, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable"
+import { applySequentialSortOrders } from "../lib/persistSortOrder"
 import { supabase } from "../lib/supabase"
 import type { Task } from "../lib/types"
 
@@ -115,6 +117,7 @@ function TaskCard({
   onTitleChange,
   onDescriptionChange,
   onDelete,
+  onGroupToggle,
   sortableContainerRef,
   dragHandleProps,
 }: {
@@ -126,6 +129,7 @@ function TaskCard({
   onTitleChange: (taskId: string, title: string) => void
   onDescriptionChange: (taskId: string, description: string) => void
   onDelete: (taskId: string) => void
+  onGroupToggle: (taskId: string) => void
   sortableContainerRef?: (node: HTMLElement | null) => void
   dragHandleProps?: React.HTMLAttributes<HTMLButtonElement>
 }) {
@@ -178,7 +182,7 @@ function TaskCard({
         columnGap: 10,
         rowGap: expanded ? 8 : 0,
         alignItems: "center",
-        marginBottom: 8,
+        marginBottom: task.group_end ? 24 : 8,
         boxShadow: checked
           ? allComplete
             ? "0 6px 20px rgba(234,179,8,0.35), 0 0 0 1px rgba(234,179,8,0.1)"
@@ -190,6 +194,10 @@ function TaskCard({
       <button
         type="button"
         {...(dragHandleProps ?? {})}
+        onDoubleClick={(e) => {
+          e.stopPropagation()
+          onGroupToggle(task.id)
+        }}
         style={{
           gridColumn: 1,
           gridRow: 1,
@@ -370,6 +378,8 @@ export default function TaskListPanel({ listId, userId, tasks, onTasksChange }: 
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null)
   const [overTaskId, setOverTaskId] = useState<string | null>(null)
   const movedDuringDrag = useRef(false)
+  const tasksRef = useRef<Task[]>(tasks)
+  tasksRef.current = tasks
 
   function handleToggle(taskId: string) {
     onTasksChange((prev) => prev.map((t) => (t.id === taskId ? { ...t, completed: !t.completed } : t)))
@@ -381,6 +391,14 @@ export default function TaskListPanel({ listId, userId, tasks, onTasksChange }: 
 
   function handleDescriptionChange(taskId: string, description: string) {
     onTasksChange((prev) => prev.map((t) => (t.id === taskId ? { ...t, description } : t)))
+  }
+
+  function handleGroupToggle(taskId: string) {
+    const task = tasks.find((t) => t.id === taskId)
+    if (!task) return
+    const toggled = !task.group_end
+    onTasksChange((prev) => prev.map((t) => (t.id === taskId ? { ...t, group_end: toggled } : t)))
+    supabase.from("tasks").update({ group_end: toggled }).eq("id", taskId).then()
   }
 
   function handleDelete(taskId: string) {
@@ -396,14 +414,18 @@ export default function TaskListPanel({ listId, userId, tasks, onTasksChange }: 
     setExpandedTaskIds((prev) => ({ ...prev, [taskId]: !prev[taskId] }))
   }
 
-  async function persistOrder(updated: Task[]) {
-    try {
-      for (let i = 0; i < updated.length; i++) {
-        await supabase.from("tasks").update({ sort_order: i }).eq("id", updated[i].id)
-      }
-    } catch {
-      // ignore
-    }
+  async function persistTaskOrder(ordered: Task[]) {
+    await applySequentialSortOrders(ordered, async (id, sortOrder) => {
+      const { data, error } = await supabase
+        .from("tasks")
+        .update({ sort_order: sortOrder })
+        .eq("id", id)
+        .eq("task_list_id", listId)
+        .select("id")
+      if (error) return { error }
+      if (!data?.length) return { error: { message: "no row updated" } }
+      return { error: null }
+    })
   }
 
   async function addTask() {
@@ -424,7 +446,6 @@ export default function TaskListPanel({ listId, userId, tasks, onTasksChange }: 
   }
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
-  const visibleTasks = activeTaskId ? tasks.filter((t) => t.id !== activeTaskId) : tasks
   const activeDragTask = activeTaskId ? tasks.find((t) => t.id === activeTaskId) : null
   const allComplete = tasks.length > 0 && tasks.every((t) => t.completed)
 
@@ -453,13 +474,15 @@ export default function TaskListPanel({ listId, userId, tasks, onTasksChange }: 
 
     if (!overId || activeId === overId) return
 
-    const oldIndex = tasks.findIndex((t) => t.id === activeId)
-    const newIndex = overId === TASKS_END_ID ? tasks.length - 1 : tasks.findIndex((t) => t.id === overId)
+    const prev = tasksRef.current
+    const oldIndex = prev.findIndex((t) => t.id === activeId)
+    const newIndex =
+      overId === TASKS_END_ID ? prev.length - 1 : prev.findIndex((t) => t.id === overId)
     if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return
 
-    const updated = arrayMove(tasks, oldIndex, newIndex)
-    onTasksChange(updated)
-    await persistOrder(updated)
+    const withOrder = arrayMove(prev, oldIndex, newIndex).map((t, i) => ({ ...t, sort_order: i }))
+    onTasksChange(withOrder)
+    await persistTaskOrder(withOrder)
   }
 
   return (
@@ -471,6 +494,7 @@ export default function TaskListPanel({ listId, userId, tasks, onTasksChange }: 
       `}</style>
       <DndContext
         sensors={sensors}
+        collisionDetection={closestCenter}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragCancel={() => {
@@ -482,10 +506,12 @@ export default function TaskListPanel({ listId, userId, tasks, onTasksChange }: 
         }}
         onDragEnd={(e) => void handleDragEnd(e)}
       >
-        <SortableContext items={visibleTasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+        <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
           <div>
-            {visibleTasks.map((t) => {
-              const showPlaceholder = activeTaskId !== null && overTaskId === t.id
+            {tasks.map((t) => {
+              const draggingRow = activeTaskId === t.id
+              const showPlaceholder =
+                activeTaskId !== null && overTaskId === t.id && !draggingRow
               return (
                 <div key={t.id}>
                   {showPlaceholder && (
@@ -493,7 +519,7 @@ export default function TaskListPanel({ listId, userId, tasks, onTasksChange }: 
                       className="task-drop-placeholder"
                       style={{
                         minHeight: 88,
-                        marginBottom: 8,
+                        marginBottom: t.group_end ? 24 : 8,
                         borderRadius: 12,
                         border: "2px dashed var(--t-p30)",
                         background: "var(--t-p05)",
@@ -502,20 +528,36 @@ export default function TaskListPanel({ listId, userId, tasks, onTasksChange }: 
                     />
                   )}
                   <SortableTaskRow id={t.id}>
-                    {({ setNodeRef, attributes, listeners }) => (
-                      <TaskCard
-                        task={t}
-                        allComplete={allComplete}
-                        expanded={expandedTaskIds[t.id] === true}
-                        onToggleExpanded={toggleExpanded}
-                        onToggle={handleToggle}
-                        onTitleChange={handleTitleChange}
-                        onDescriptionChange={handleDescriptionChange}
-                        onDelete={handleDelete}
-                        sortableContainerRef={setNodeRef}
-                        dragHandleProps={{ ...attributes, ...listeners }}
-                      />
-                    )}
+                    {({ setNodeRef, attributes, listeners }) =>
+                      draggingRow ? (
+                        <div
+                          ref={setNodeRef}
+                          style={{
+                            minHeight: 88,
+                            marginBottom: t.group_end ? 24 : 8,
+                            borderRadius: 12,
+                            opacity: 0.2,
+                            boxSizing: "border-box",
+                            background: "var(--t-p05)",
+                          }}
+                          aria-hidden
+                        />
+                      ) : (
+                        <TaskCard
+                          task={t}
+                          allComplete={allComplete}
+                          expanded={expandedTaskIds[t.id] === true}
+                          onToggleExpanded={toggleExpanded}
+                          onToggle={handleToggle}
+                          onTitleChange={handleTitleChange}
+                          onDescriptionChange={handleDescriptionChange}
+                          onDelete={handleDelete}
+                          onGroupToggle={handleGroupToggle}
+                          sortableContainerRef={setNodeRef}
+                          dragHandleProps={{ ...attributes, ...listeners }}
+                        />
+                      )
+                    }
                   </SortableTaskRow>
                 </div>
               )
