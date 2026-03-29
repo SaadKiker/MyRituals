@@ -25,11 +25,17 @@ export async function GET(req: NextRequest) {
     { data: goals },
     { data: habits },
     { data: scheduleEvents },
+    { data: taskLists },
+    { data: tasks },
+    { data: reminders },
   ] = await Promise.all([
     admin.from("goal_sets").select("*"),
     admin.from("goals").select("*"),
     admin.from("habits").select("*"),
     admin.from("schedule_events").select("*"),
+    admin.from("task_lists").select("*"),
+    admin.from("tasks").select("*"),
+    admin.from("reminders").select("*"),
   ])
 
   return NextResponse.json({
@@ -43,5 +49,8 @@ export async function GET(req: NextRequest) {
     goals: goals ?? [],
     habits: habits ?? [],
     scheduleEvents: scheduleEvents ?? [],
+    taskLists: taskLists ?? [],
+    tasks: tasks ?? [],
+    reminders: reminders ?? [],
   })
 }
