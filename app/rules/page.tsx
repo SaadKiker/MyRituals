@@ -111,49 +111,42 @@ export default function RulesPage() {
         html, body { background: #0d0d0d; }
 
         .rule-card {
-          background: #161010;
-          border: 1px solid rgba(192,57,43,0.12);
-          padding: 48px 36px;
+          background: #1a0f0f;
+          border: 1.5px solid rgba(192,57,43,0.2);
+          border-radius: 20px;
+          padding: 48px 32px;
           position: relative;
-          min-height: 260px;
+          min-height: 240px;
           display: flex;
-          align-items: flex-end;
+          align-items: center;
+          justify-content: center;
           cursor: default;
-          transition: background 0.2s, border-color 0.2s;
+          transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
         }
         .rule-card:hover {
-          background: #1e1010;
-          border-color: rgba(192,57,43,0.45);
+          border-color: rgba(192,57,43,0.6);
+          transform: translateY(-4px);
+          box-shadow: 0 20px 48px rgba(192,57,43,0.18);
         }
         .rule-card:hover .rule-del {
           opacity: 1 !important;
         }
-        .rule-card:hover .rule-accent {
-          width: 6px;
-        }
-        .rule-accent {
-          position: absolute;
-          left: 0;
-          top: 0;
-          bottom: 0;
-          width: 3px;
-          background: #c0392b;
-          transition: width 0.2s;
-        }
         .rule-text {
-          font-size: clamp(1.4rem, 2vw, 1.9rem);
+          font-size: clamp(1.3rem, 1.8vw, 1.75rem);
           font-weight: 800;
           color: #fff;
-          line-height: 1.2;
-          letter-spacing: -0.025em;
+          line-height: 1.25;
+          letter-spacing: -0.02em;
+          text-align: center;
           width: 100%;
         }
         .rule-text-input {
-          font-size: clamp(1.4rem, 2vw, 1.9rem);
+          font-size: clamp(1.3rem, 1.8vw, 1.75rem);
           font-weight: 800;
-          color: rgba(255,255,255,0.35);
-          line-height: 1.2;
-          letter-spacing: -0.025em;
+          color: rgba(255,255,255,0.3);
+          line-height: 1.25;
+          letter-spacing: -0.02em;
+          text-align: center;
           background: transparent;
           border: none;
           outline: none;
@@ -270,10 +263,9 @@ export default function RulesPage() {
             </div>
 
             {/* Rules grid — 4 columns */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 2 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 20 }}>
               {(grouped[cat] ?? []).map((rule) => (
                 <div key={rule.id} className="rule-card">
-                  <div className="rule-accent" />
 
                   {editingId === rule.id ? (
                     <input
