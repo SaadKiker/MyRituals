@@ -111,22 +111,19 @@ export default function RulesPage() {
         html, body { background: #0d0d0d; }
 
         .rule-card {
-          width: 100%;
           background: #161010;
-          border-top: 1px solid rgba(192,57,43,0.15);
-          border-bottom: 1px solid rgba(192,57,43,0.15);
-          padding: 48px 60px;
+          border: 1px solid rgba(192,57,43,0.12);
+          padding: 48px 36px;
           position: relative;
+          min-height: 260px;
           display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 40px;
+          align-items: flex-end;
           cursor: default;
-          transition: background 0.2s;
-          margin-bottom: -1px;
+          transition: background 0.2s, border-color 0.2s;
         }
         .rule-card:hover {
           background: #1e1010;
+          border-color: rgba(192,57,43,0.45);
         }
         .rule-card:hover .rule-del {
           opacity: 1 !important;
@@ -144,35 +141,24 @@ export default function RulesPage() {
           transition: width 0.2s;
         }
         .rule-text {
-          font-size: clamp(1.6rem, 3vw, 2.4rem);
+          font-size: clamp(1.4rem, 2vw, 1.9rem);
           font-weight: 800;
           color: #fff;
           line-height: 1.2;
           letter-spacing: -0.025em;
-          flex: 1;
+          width: 100%;
         }
         .rule-text-input {
-          font-size: clamp(1.6rem, 3vw, 2.4rem);
+          font-size: clamp(1.4rem, 2vw, 1.9rem);
           font-weight: 800;
-          color: rgba(255,255,255,0.5);
+          color: rgba(255,255,255,0.35);
           line-height: 1.2;
           letter-spacing: -0.025em;
-          flex: 1;
           background: transparent;
           border: none;
           outline: none;
           font-family: inherit;
           width: 100%;
-        }
-        .add-rule-row {
-          width: 100%;
-          border-top: 1px dashed rgba(192,57,43,0.25);
-          border-bottom: 1px dashed rgba(192,57,43,0.25);
-          padding: 48px 60px;
-          display: flex;
-          align-items: center;
-          gap: 40px;
-          margin-bottom: -1px;
         }
       `}</style>
 
@@ -283,8 +269,8 @@ export default function RulesPage() {
               </button>
             </div>
 
-            {/* Rules */}
-            <div>
+            {/* Rules grid — 4 columns */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 2 }}>
               {(grouped[cat] ?? []).map((rule) => (
                 <div key={rule.id} className="rule-card">
                   <div className="rule-accent" />
@@ -314,9 +300,10 @@ export default function RulesPage() {
                     className="rule-del"
                     onClick={() => setDeleteId(rule.id)}
                     style={{
+                      position: "absolute", top: 16, right: 20,
                       background: "transparent", border: "none",
                       color: "#c0392b", opacity: 0,
-                      fontSize: "1.8rem", lineHeight: 1, flexShrink: 0,
+                      fontSize: "1.5rem", lineHeight: 1,
                       cursor: "pointer", transition: "opacity 0.15s",
                     }}
                   >
@@ -325,9 +312,9 @@ export default function RulesPage() {
                 </div>
               ))}
 
-              {/* Inline add */}
+              {/* Inline add card */}
               {addingRuleInCategory === cat && (
-                <div className="add-rule-row">
+                <div className="rule-card" style={{ background: "#130e0e", border: "1.5px dashed rgba(192,57,43,0.3)" }}>
                   <input
                     ref={newRuleInputRef}
                     value={newRuleDraft}
