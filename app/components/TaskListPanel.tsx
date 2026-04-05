@@ -16,7 +16,6 @@ import {
   type DraggableSyntheticListeners,
 } from "@dnd-kit/core"
 import { SortableContext, arrayMove, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable"
-import { applySequentialSortOrders } from "../lib/persistSortOrder"
 import { supabase } from "../lib/supabase"
 import type { Task } from "../lib/types"
 
@@ -415,21 +414,13 @@ export default function TaskListPanel({ listId, userId, tasks, onTasksChange }: 
   }
 
   async function persistTaskOrder(ordered: Task[]) {
-    await applySequentialSortOrders(ordered, async (id, sortOrder) => {
-      const { data, error } = await supabase
-        .from("tasks")
-        .update({ sort_order: sortOrder })
-        .eq("id", id)
-        .eq("task_list_id", listId)
-        .select("id")
-      if (error) return { error }
-      if (!data?.length) return { error: { message: "no row updated" } }
-      return { error: null }
-    })
+    for (let i = 0; i < ordered.length; i++) {
+      await supabase.from("tasks").update({ sort_order: i }).eq("id", ordered[i].id)
+    }
   }
 
   async function addTask() {
-    const newSortOrder = tasks.length
+    const newSortOrder = tasks.length === 0 ? 0 : Math.max(...tasks.map((t) => t.sort_order)) + 1
     const { data } = await supabase
       .from("tasks")
       .insert({
