@@ -428,7 +428,7 @@ export default function TaskListPanel({ listId, userId, tasks, onTasksChange }: 
                     <div
                       className="task-drop-placeholder"
                       style={{
-                        minHeight: 88,
+                        minHeight: 44,
                         marginBottom: t.group_end ? 24 : 8,
                         borderRadius: 12,
                         border: "2px dashed var(--t-p30)",
@@ -443,7 +443,7 @@ export default function TaskListPanel({ listId, userId, tasks, onTasksChange }: 
                         <div
                           ref={setNodeRef}
                           style={{
-                            minHeight: 88,
+                            minHeight: 44,
                             marginBottom: t.group_end ? 24 : 8,
                             borderRadius: 12,
                             opacity: 0.2,
@@ -474,7 +474,7 @@ export default function TaskListPanel({ listId, userId, tasks, onTasksChange }: 
               <div
                 className="task-drop-placeholder"
                 style={{
-                  minHeight: 88,
+                  minHeight: 44,
                   marginBottom: 8,
                   borderRadius: 12,
                   border: "2px dashed var(--t-p30)",
