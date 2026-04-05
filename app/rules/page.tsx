@@ -132,7 +132,7 @@ export default function RulesPage() {
           opacity: 1 !important;
         }
         .rule-text {
-          font-size: clamp(1.3rem, 1.8vw, 1.75rem);
+          font-size: clamp(1.6rem, 2.2vw, 2.2rem);
           font-weight: 800;
           color: #fff;
           line-height: 1.25;
@@ -141,7 +141,7 @@ export default function RulesPage() {
           width: 100%;
         }
         .rule-text-input {
-          font-size: clamp(1.3rem, 1.8vw, 1.75rem);
+          font-size: clamp(1.6rem, 2.2vw, 2.2rem);
           font-weight: 800;
           color: rgba(255,255,255,0.3);
           line-height: 1.25;
@@ -263,7 +263,7 @@ export default function RulesPage() {
             </div>
 
             {/* Rules grid — 4 columns */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 20 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 20, padding: "0 48px" }}>
               {(grouped[cat] ?? []).map((rule) => (
                 <div key={rule.id} className="rule-card">
 
