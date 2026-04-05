@@ -157,24 +157,19 @@ export default function TasksPage() {
 
   const selectedListId = useMemo(() => {
     const q = searchParams.get("list")
+    if (!q) return REMINDERS_ID
     if (q === REMINDERS_ID) return REMINDERS_ID
-    if (!lists.length) return null
-    if (q && lists.some((l) => l.id === q)) return q
-    return lists[0].id
+    if (!lists.length) return REMINDERS_ID
+    if (lists.some((l) => l.id === q)) return q
+    return REMINDERS_ID
   }, [lists, searchParams])
 
   useEffect(() => {
     if (loading) return
     const q = searchParams.get("list")
-    if (q === REMINDERS_ID) return
-    if (!lists.length) {
-      if (q) router.replace("/tasks", { scroll: false })
-      return
-    }
-    const valid = q && lists.some((l) => l.id === q)
-    const wanted = valid ? q! : lists[0].id
-    if (q !== wanted) {
-      router.replace(`/tasks?list=${wanted}`, { scroll: false })
+    if (!q || q === REMINDERS_ID) return
+    if (!lists.some((l) => l.id === q)) {
+      router.replace("/tasks", { scroll: false })
     }
   }, [lists, loading, searchParams, router])
 
