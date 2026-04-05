@@ -110,11 +110,8 @@ function TaskDragGhost({ task, allComplete }: { task: Task; allComplete: boolean
 function TaskCard({
   task,
   allComplete,
-  expanded,
-  onToggleExpanded,
   onToggle,
   onTitleChange,
-  onDescriptionChange,
   onDelete,
   onGroupToggle,
   sortableContainerRef,
@@ -122,11 +119,8 @@ function TaskCard({
 }: {
   task: Task
   allComplete: boolean
-  expanded: boolean
-  onToggleExpanded: (taskId: string) => void
   onToggle: (taskId: string) => void
   onTitleChange: (taskId: string, title: string) => void
-  onDescriptionChange: (taskId: string, description: string) => void
   onDelete: (taskId: string) => void
   onGroupToggle: (taskId: string) => void
   sortableContainerRef?: (node: HTMLElement | null) => void
@@ -134,7 +128,6 @@ function TaskCard({
 }) {
   const checked = task.completed
   const titleTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const descTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   async function handleToggle() {
     onToggle(task.id)
@@ -146,14 +139,6 @@ function TaskCard({
     if (titleTimer.current) clearTimeout(titleTimer.current)
     titleTimer.current = setTimeout(async () => {
       await supabase.from("tasks").update({ title: val }).eq("id", task.id)
-    }, 600)
-  }
-
-  function handleDescription(val: string) {
-    onDescriptionChange(task.id, val)
-    if (descTimer.current) clearTimeout(descTimer.current)
-    descTimer.current = setTimeout(async () => {
-      await supabase.from("tasks").update({ description: val }).eq("id", task.id)
     }, 600)
   }
 
@@ -176,10 +161,8 @@ function TaskCard({
         borderRadius: 12,
         padding: "10px 12px",
         display: "grid",
-        gridTemplateColumns: "auto auto minmax(0, 1fr) auto auto",
-        gridTemplateRows: "auto auto",
+        gridTemplateColumns: "auto auto minmax(0, 1fr) auto",
         columnGap: 10,
-        rowGap: expanded ? 8 : 0,
         alignItems: "center",
         marginBottom: task.group_end ? 24 : 8,
         boxShadow: checked
@@ -280,59 +263,6 @@ function TaskCard({
         }}
       />
 
-      {expanded && (
-        <textarea
-          value={task.description ?? ""}
-          onChange={(e) => handleDescription(e.target.value)}
-          rows={3}
-          style={{
-            gridColumn: "3 / 6",
-            gridRow: 2,
-            width: "100%",
-            minWidth: 0,
-            resize: "vertical",
-            background: "rgba(255,255,255,0.55)",
-            border: "1.5px solid var(--t-border)",
-            borderRadius: 10,
-            padding: "8px 10px",
-            outline: "none",
-            fontFamily: "inherit",
-            fontSize: "0.85rem",
-            color: checked ? (allComplete ? "#a16207" : "#166534") : "var(--t-primary)",
-            boxSizing: "border-box",
-            alignSelf: "stretch",
-          }}
-        />
-      )}
-
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation()
-          onToggleExpanded(task.id)
-        }}
-        title={expanded ? "Collapse description" : "Edit description"}
-        style={{
-          gridColumn: 4,
-          gridRow: 1,
-          alignSelf: "center",
-          background: "transparent",
-          border: "none",
-          color: "var(--t-muted)",
-          cursor: "pointer",
-          padding: "2px 3px",
-          lineHeight: 1,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 20h9" />
-          <path d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4Z" />
-        </svg>
-      </button>
-
       <button
         type="button"
         onClick={(e) => {
@@ -341,8 +271,7 @@ function TaskCard({
         }}
         className="task-del-btn"
         style={{
-          gridColumn: 5,
-          gridRow: 1,
+          gridColumn: 4,
           alignSelf: "center",
           background: "transparent",
           border: "none",
@@ -373,7 +302,6 @@ type Props = {
 }
 
 export default function TaskListPanel({ listId, userId, tasks, onTasksChange }: Props) {
-  const [expandedTaskIds, setExpandedTaskIds] = useState<Record<string, boolean>>({})
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null)
   const [overTaskId, setOverTaskId] = useState<string | null>(null)
   const movedDuringDrag = useRef(false)
@@ -388,10 +316,6 @@ export default function TaskListPanel({ listId, userId, tasks, onTasksChange }: 
     onTasksChange((prev) => prev.map((t) => (t.id === taskId ? { ...t, title } : t)))
   }
 
-  function handleDescriptionChange(taskId: string, description: string) {
-    onTasksChange((prev) => prev.map((t) => (t.id === taskId ? { ...t, description } : t)))
-  }
-
   function handleGroupToggle(taskId: string) {
     const task = tasks.find((t) => t.id === taskId)
     if (!task) return
@@ -402,18 +326,13 @@ export default function TaskListPanel({ listId, userId, tasks, onTasksChange }: 
 
   function handleDelete(taskId: string) {
     onTasksChange((prev) => prev.filter((t) => t.id !== taskId))
-    setExpandedTaskIds((prev) => {
-      const next = { ...prev }
-      delete next[taskId]
-      return next
-    })
-  }
-
-  function toggleExpanded(taskId: string) {
-    setExpandedTaskIds((prev) => ({ ...prev, [taskId]: !prev[taskId] }))
   }
 
   async function persistTaskOrder(ordered: Task[]) {
+    // Two-pass: move to staging values first to avoid unique (task_list_id, sort_order) conflicts
+    for (let i = 0; i < ordered.length; i++) {
+      await supabase.from("tasks").update({ sort_order: 1_000_000 + i }).eq("id", ordered[i].id)
+    }
     for (let i = 0; i < ordered.length; i++) {
       await supabase.from("tasks").update({ sort_order: i }).eq("id", ordered[i].id)
     }
@@ -537,11 +456,8 @@ export default function TaskListPanel({ listId, userId, tasks, onTasksChange }: 
                         <TaskCard
                           task={t}
                           allComplete={allComplete}
-                          expanded={expandedTaskIds[t.id] === true}
-                          onToggleExpanded={toggleExpanded}
                           onToggle={handleToggle}
                           onTitleChange={handleTitleChange}
-                          onDescriptionChange={handleDescriptionChange}
                           onDelete={handleDelete}
                           onGroupToggle={handleGroupToggle}
                           sortableContainerRef={setNodeRef}
