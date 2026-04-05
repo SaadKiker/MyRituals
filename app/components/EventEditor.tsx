@@ -14,7 +14,7 @@ type Props = {
   defaultHour: number
   calHours?: number[]
   calStartHours?: number[]
-  onSave: (data: Omit<ScheduleEventType, "id" | "user_id">, id?: string) => void
+  onSave: (data: Omit<ScheduleEventType, "id" | "user_id" | "day_of_week">, id?: string) => void
   onClose: () => void
 }
 

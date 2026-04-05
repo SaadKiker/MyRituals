@@ -580,10 +580,11 @@ export default function TaskListPanel({ listId, userId, tasks, onTasksChange }: 
         </SortableContext>
 
         <TasksEndDropSlot>
-          <div style={{ marginTop: 8, border: "2px dashed var(--t-bg)", borderRadius: 12, padding: "12px", textAlign: "center" }}>
+          <div style={{ marginTop: 8, border: "2px dashed var(--t-bg)", borderRadius: 12, textAlign: "center" }}>
             <button
               onClick={() => void addTask()}
               style={{
+                width: "100%",
                 background: "transparent",
                 border: "none",
                 color: "var(--t-muted)",
@@ -592,7 +593,7 @@ export default function TaskListPanel({ listId, userId, tasks, onTasksChange }: 
                 cursor: "pointer",
                 fontFamily: "inherit",
                 transition: "color 0.2s",
-                padding: 0,
+                padding: "12px",
               }}
               onMouseEnter={(e) => {
                 ;(e.currentTarget as HTMLButtonElement).style.color = "var(--t-primary)"

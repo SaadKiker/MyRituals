@@ -9,6 +9,13 @@ import HabitList from "../../components/HabitList"
 import type { Habit, HabitEntry } from "../../components/HabitItem"
 import { useAppUser } from "../layout"
 
+const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+
+/** Maps JS getDay() (0=Sun) → our index (0=Mon, 6=Sun) */
+function getTodayIndex() {
+  return (new Date().getDay() + 6) % 7
+}
+
 function getToday() {
   return new Date().toISOString().split("T")[0]
 }
@@ -45,6 +52,11 @@ export default function SchedulePage() {
   const [contextMenu, setContextMenu] = useState<ContextMenu | null>(null)
   const [loading, setLoading] = useState(true)
   const today = getToday()
+
+  // Day-of-week navigation (0=Monday … 6=Sunday)
+  const [dayIndex, setDayIndex] = useState(getTodayIndex)
+  const [slideDir, setSlideDir] = useState<"from-right" | "from-left">("from-right")
+  const [animKey, setAnimKey] = useState(0)
 
   const [wakeHour, setWakeHour] = useState(12)
   const [sleepHour, setSleepHour] = useState(6)
@@ -122,7 +134,21 @@ export default function SchedulePage() {
     return () => document.removeEventListener("click", close)
   }, [contextMenu])
 
-  async function handleSave(data: Omit<ScheduleEventType, "id" | "user_id">, id?: string) {
+  function navigateDay(dir: "prev" | "next") {
+    if (dir === "prev") {
+      setSlideDir("from-left")
+      setDayIndex((d) => (d + 6) % 7)
+    } else {
+      setSlideDir("from-right")
+      setDayIndex((d) => (d + 1) % 7)
+    }
+    setAnimKey((k) => k + 1)
+  }
+
+  // Events filtered to the currently-viewed day
+  const dayEvents = events.filter((e) => e.day_of_week === dayIndex)
+
+  async function handleSave(data: Omit<ScheduleEventType, "id" | "user_id" | "day_of_week">, id?: string) {
     setEditor(null)
     if (id) {
       const { data: updated } = await supabase
@@ -141,7 +167,7 @@ export default function SchedulePage() {
     } else {
       const { data: created } = await supabase
         .from("schedule_events")
-        .insert({ ...data, user_id: user.id })
+        .insert({ ...data, user_id: user.id, day_of_week: dayIndex })
         .select()
         .single()
       if (created) {
@@ -199,13 +225,8 @@ export default function SchedulePage() {
   }
 
   const allComplete =
-    events.length > 0 && events.every((e) => entries.find((en) => en.event_id === e.id)?.status === "completed")
-
-  const dateLabel = new Date().toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  })
+    dayEvents.length > 0 &&
+    dayEvents.every((e) => entries.find((en) => en.event_id === e.id)?.status === "completed")
 
   if (loading) return null
 
@@ -215,6 +236,20 @@ export default function SchedulePage() {
         .habit-row:hover .habit-del-btn {
           opacity: 1 !important;
         }
+        @keyframes cardFromRight {
+          from { transform: translateX(52px); opacity: 0; }
+          to   { transform: translateX(0);   opacity: 1; }
+        }
+        @keyframes cardFromLeft {
+          from { transform: translateX(-52px); opacity: 0; }
+          to   { transform: translateX(0);    opacity: 1; }
+        }
+        .card-enter-right {
+          animation: cardFromRight 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+        .card-enter-left {
+          animation: cardFromLeft 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
       `}</style>
 
       <div className="schedule-shell" style={{ margin: "90px auto 0", padding: "0 20px 20px" }}>
@@ -222,9 +257,70 @@ export default function SchedulePage() {
           <div className="schedule-left">
             <div className="schedule-calendar">
               <div className="schedule-header">
-                <span className="schedule-header-date" style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--t-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                  {dateLabel}
-                </span>
+                {/* Day-of-week navigator */}
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <button
+                    onClick={() => navigateDay("prev")}
+                    title="Previous day"
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 7,
+                      border: "1px solid var(--t-input-border)",
+                      background: "var(--t-p06)",
+                      color: "var(--t-muted)",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      cursor: "pointer",
+                      padding: 0,
+                      flexShrink: 0,
+                    }}
+                  >
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="15 18 9 12 15 6" />
+                    </svg>
+                  </button>
+
+                  <span
+                    style={{
+                      fontSize: "0.85rem",
+                      fontWeight: 700,
+                      color: "var(--t-primary)",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
+                      minWidth: 90,
+                      textAlign: "center",
+                      userSelect: "none",
+                    }}
+                  >
+                    {DAYS[dayIndex]}
+                  </span>
+
+                  <button
+                    onClick={() => navigateDay("next")}
+                    title="Next day"
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 7,
+                      border: "1px solid var(--t-input-border)",
+                      background: "var(--t-p06)",
+                      color: "var(--t-muted)",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      cursor: "pointer",
+                      padding: 0,
+                      flexShrink: 0,
+                    }}
+                  >
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                  </button>
+                </div>
+
                 <div className="schedule-header-controls" style={{ display: "flex", alignItems: "center", gap: 8, position: "relative" }}>
                   {/* Sleep Hours Button */}
                   <div style={{ position: "relative" }}>
@@ -370,16 +466,24 @@ export default function SchedulePage() {
                 </div>
               </div>
 
-              <ScheduleGrid
-                events={events}
-                entries={entries}
-                allComplete={allComplete}
-                calHours={calHours}
-                calStartHours={calStartHours}
-                onGridClick={(hour) => setEditor({ event: null, defaultHour: hour })}
-                onEventEdit={(evt) => setEditor({ event: evt, defaultHour: evt.start_hour })}
-                onEventContextMenu={(evt, x, y) => setContextMenu({ event: evt, x, y })}
-              />
+              {/* Animated card container */}
+              <div style={{ overflow: "hidden" }}>
+                <div
+                  key={animKey}
+                  className={slideDir === "from-right" ? "card-enter-right" : "card-enter-left"}
+                >
+                  <ScheduleGrid
+                    events={dayEvents}
+                    entries={entries}
+                    allComplete={allComplete}
+                    calHours={calHours}
+                    calStartHours={calStartHours}
+                    onGridClick={(hour) => setEditor({ event: null, defaultHour: hour })}
+                    onEventEdit={(evt) => setEditor({ event: evt, defaultHour: evt.start_hour })}
+                    onEventContextMenu={(evt, x, y) => setContextMenu({ event: evt, x, y })}
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -418,7 +522,7 @@ export default function SchedulePage() {
                 entries={habitEntries}
                 userId={user.id}
                 today={today}
-                dateLabel={dateLabel}
+                dateLabel={DAYS[dayIndex]}
                 headerLabel="Habits"
                 showDateLabel={false}
                 onHabitsChange={setHabits}

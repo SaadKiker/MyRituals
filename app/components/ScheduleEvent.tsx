@@ -11,6 +11,7 @@ export type ScheduleEventType = {
   end_hour: number
   end_minute: number
   color: string
+  day_of_week: number
 }
 
 export type EventEntry = {
