@@ -716,10 +716,9 @@ export default function SchedulePage() {
                   />
                 </div>
               </div>
-            </div>
 
-            {/* Weekly report export — only visible on Sunday, below the calendar */}
-            {dayIndex === 6 && (
+              {/* Weekly report export — only visible on Sunday, below the calendar */}
+              {dayIndex === 6 && (
               <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
                 <button
                   onClick={() => void handleExportWeek()}
@@ -764,7 +763,8 @@ export default function SchedulePage() {
                 </button>
               </div>
             )}
-          </div>
+            </div>{/* /schedule-calendar */}
+          </div>{/* /schedule-left */}
 
           <div className="schedule-right">
             {habits.length === 0 ? (
