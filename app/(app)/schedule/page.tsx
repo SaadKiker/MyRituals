@@ -83,8 +83,8 @@ async function generateWeekImage(
   ctx.fillStyle = "#6b7280"
   ctx.fillText(formatWeekRange(weekDates), W / 2, 68)
 
-  // Column headers
-  const COL = { day: PAD, done: W - PAD - 76, skip: W - PAD }
+  // Column x positions (right-aligned anchors)
+  const COL = { day: PAD, done: W - PAD - 96, skip: W - PAD }
   const headerY = 100
 
   ctx.font = `bold 10px ${FONT}`
@@ -92,7 +92,7 @@ async function generateWeekImage(
   ctx.textAlign = "left"
   ctx.fillText("DAY", COL.day, headerY)
   ctx.textAlign = "right"
-  ctx.fillText("DONE", COL.done + 76, headerY)
+  ctx.fillText("DONE", COL.done, headerY)
   ctx.fillText("SKIPPED", COL.skip, headerY)
 
   // Header underline
@@ -139,7 +139,7 @@ async function generateWeekImage(
       ctx.font = `13px ${FONT}`
       ctx.fillStyle = "#d1d5db"
       ctx.textAlign = "right"
-      ctx.fillText("—", COL.done + 76, midY)
+      ctx.fillText("—", COL.done, midY)
       ctx.fillText("—", COL.skip, midY)
     } else {
       const donePct = Math.round((completed / total) * 100)
@@ -149,7 +149,7 @@ async function generateWeekImage(
       ctx.font = `bold 14px ${FONT}`
       ctx.fillStyle = donePct >= 80 ? "#16a34a" : donePct >= 50 ? "#2563eb" : "#6b7280"
       ctx.textAlign = "right"
-      ctx.fillText(`${donePct}%`, COL.done + 76, midY)
+      ctx.fillText(`${donePct}%`, COL.done, midY)
 
       // Skipped
       ctx.font = `13px ${FONT}`
@@ -190,7 +190,7 @@ async function generateWeekImage(
   ctx.font = `bold 15px ${FONT}`
   ctx.fillStyle = wDone >= 80 ? "#16a34a" : wDone >= 50 ? "#2563eb" : "#6b7280"
   ctx.textAlign = "right"
-  ctx.fillText(`${wDone}%`, COL.done + 76, tMidY)
+  ctx.fillText(`${wDone}%`, COL.done, tMidY)
 
   ctx.font = `13px ${FONT}`
   ctx.fillStyle = wSkip > 0 ? "#d97706" : "#d1d5db"
@@ -487,6 +487,7 @@ export default function SchedulePage() {
         <div className="schedule-split">
           <div className="schedule-left">
             <div className="schedule-calendar">
+
               <div className="schedule-header">
                 {/* Day-of-week navigator */}
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -716,6 +717,53 @@ export default function SchedulePage() {
                 </div>
               </div>
             </div>
+
+            {/* Weekly report export — only visible on Sunday, below the calendar */}
+            {dayIndex === 6 && (
+              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
+                <button
+                  onClick={() => void handleExportWeek()}
+                  disabled={exportLoading}
+                  title="Export weekly report"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "7px 12px",
+                    borderRadius: 9,
+                    border: "1px solid var(--t-input-border)",
+                    background: exportLoading ? "var(--t-p06)" : "var(--t-panel)",
+                    color: exportLoading ? "var(--t-muted)" : "var(--t-primary)",
+                    fontSize: "0.78rem",
+                    fontWeight: 600,
+                    cursor: exportLoading ? "default" : "pointer",
+                    fontFamily: "inherit",
+                    opacity: exportLoading ? 0.6 : 1,
+                    transition: "opacity 0.15s, background 0.15s",
+                    boxShadow: "0 1px 4px var(--t-p08)",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!exportLoading) (e.currentTarget as HTMLButtonElement).style.background = "var(--t-p06)"
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!exportLoading) (e.currentTarget as HTMLButtonElement).style.background = "var(--t-panel)"
+                  }}
+                >
+                  {exportLoading ? (
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: "spin 0.9s linear infinite" }}>
+                      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                    </svg>
+                  ) : (
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                      <polyline points="16 6 12 2 8 6" />
+                      <line x1="12" y1="2" x2="12" y2="15" />
+                    </svg>
+                  )}
+                  {exportLoading ? "Generating…" : "Week Report"}
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="schedule-right">
@@ -759,53 +807,6 @@ export default function SchedulePage() {
                 onHabitsChange={setHabits}
                 onEntriesChange={setHabitEntries}
               />
-            )}
-
-            {/* Weekly report export — only visible on Sunday */}
-            {dayIndex === 6 && (
-              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 20 }}>
-                <button
-                  onClick={() => void handleExportWeek()}
-                  disabled={exportLoading}
-                  title="Export weekly report"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 6,
-                    padding: "7px 12px",
-                    borderRadius: 9,
-                    border: "1px solid var(--t-input-border)",
-                    background: exportLoading ? "var(--t-p06)" : "var(--t-panel)",
-                    color: exportLoading ? "var(--t-muted)" : "var(--t-primary)",
-                    fontSize: "0.78rem",
-                    fontWeight: 600,
-                    cursor: exportLoading ? "default" : "pointer",
-                    fontFamily: "inherit",
-                    opacity: exportLoading ? 0.6 : 1,
-                    transition: "opacity 0.15s, background 0.15s",
-                    boxShadow: "0 1px 4px var(--t-p08)",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!exportLoading) (e.currentTarget as HTMLButtonElement).style.background = "var(--t-p06)"
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!exportLoading) (e.currentTarget as HTMLButtonElement).style.background = "var(--t-panel)"
-                  }}
-                >
-                  {exportLoading ? (
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: "spin 0.9s linear infinite" }}>
-                      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-                    </svg>
-                  ) : (
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-                      <polyline points="16 6 12 2 8 6" />
-                      <line x1="12" y1="2" x2="12" y2="15" />
-                    </svg>
-                  )}
-                  {exportLoading ? "Generating…" : "Week Report"}
-                </button>
-              </div>
             )}
           </div>
         </div>
