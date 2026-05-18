@@ -10,7 +10,6 @@ import type { Habit, HabitEntry } from "../../components/HabitItem"
 import { useAppUser } from "../layout"
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-const DAYS_SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 /** Maps JS getDay() (0=Sun) → our index (0=Mon, 6=Sun) */
 function getTodayIndex() {
@@ -19,186 +18,6 @@ function getTodayIndex() {
 
 function getToday() {
   return new Date().toISOString().split("T")[0]
-}
-
-/** Returns the Mon–Sun dates of the current real week as YYYY-MM-DD strings */
-function getWeekDates(): string[] {
-  const now = new Date()
-  const monday = new Date(now)
-  monday.setDate(now.getDate() - ((now.getDay() + 6) % 7))
-  monday.setHours(0, 0, 0, 0)
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(monday)
-    d.setDate(monday.getDate() + i)
-    return d.toISOString().split("T")[0]
-  })
-}
-
-function formatWeekRange(dates: string[]): string {
-  const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
-  const fmt = (d: string) => {
-    const [, m, day] = d.split("-").map(Number)
-    return `${MONTHS[m - 1]} ${day}`
-  }
-  const year = dates[0].split("-")[0]
-  return `${fmt(dates[0])} – ${fmt(dates[6])}, ${year}`
-}
-
-async function generateWeekImage(
-  events: ScheduleEventType[],
-  weekEntries: EventEntry[],
-  weekDates: string[]
-): Promise<Blob> {
-  const dpr = Math.min(typeof window !== "undefined" ? window.devicePixelRatio : 2, 3)
-  const W = 440
-  const ROW_H = 48
-  const H = 100 + 28 + 7 * ROW_H + 72 + 40
-  const canvas = document.createElement("canvas")
-  canvas.width = W * dpr
-  canvas.height = H * dpr
-  canvas.style.width = `${W}px`
-  canvas.style.height = `${H}px`
-  const ctx = canvas.getContext("2d")!
-  ctx.scale(dpr, dpr)
-
-  const FONT = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
-  const PAD = 36
-
-  // Background
-  ctx.fillStyle = "#fafafa"
-  ctx.fillRect(0, 0, W, H)
-
-  // Subtle top accent bar
-  ctx.fillStyle = "#e0e7ff"
-  ctx.fillRect(0, 0, W, 4)
-
-  // Title
-  ctx.font = `bold 21px ${FONT}`
-  ctx.fillStyle = "#111827"
-  ctx.textAlign = "center"
-  ctx.fillText("Weekly Review", W / 2, 46)
-
-  // Date range
-  ctx.font = `13px ${FONT}`
-  ctx.fillStyle = "#6b7280"
-  ctx.fillText(formatWeekRange(weekDates), W / 2, 68)
-
-  // Column x positions (right-aligned anchors)
-  const COL = { day: PAD, done: W - PAD - 96, skip: W - PAD }
-  const headerY = 100
-
-  ctx.font = `bold 10px ${FONT}`
-  ctx.fillStyle = "#9ca3af"
-  ctx.textAlign = "left"
-  ctx.fillText("DAY", COL.day, headerY)
-  ctx.textAlign = "right"
-  ctx.fillText("DONE", COL.done, headerY)
-  ctx.fillText("SKIPPED", COL.skip, headerY)
-
-  // Header underline
-  ctx.strokeStyle = "#e5e7eb"
-  ctx.lineWidth = 1
-  ctx.beginPath()
-  ctx.moveTo(PAD, headerY + 9)
-  ctx.lineTo(W - PAD, headerY + 9)
-  ctx.stroke()
-
-  // Day rows
-  const startY = 128
-  let totalEvents = 0, totalCompleted = 0, totalSkipped = 0
-
-  for (let i = 0; i < 7; i++) {
-    const y = startY + i * ROW_H
-    const dayEvts = events.filter((e) => e.day_of_week === i)
-    const total = dayEvts.length
-    const dateStr = weekDates[i]
-    const dayEnts = weekEntries.filter((e) => e.entry_date === dateStr)
-    const completed = dayEvts.filter((e) => dayEnts.find((en) => en.event_id === e.id)?.status === "completed").length
-    const skipped = dayEvts.filter((e) => dayEnts.find((en) => en.event_id === e.id)?.status === "skipped").length
-
-    totalEvents += total
-    totalCompleted += completed
-    totalSkipped += skipped
-
-    const isSun = i === 6
-    const midY = y + ROW_H / 2 + 5
-
-    // Row highlight for Sunday
-    if (isSun) {
-      ctx.fillStyle = "#f0f4ff"
-      ctx.fillRect(PAD - 8, y + 4, W - (PAD - 8) * 2, ROW_H - 4)
-    }
-
-    // Day name
-    ctx.font = `${isSun ? "bold" : "500"} 13px ${FONT}`
-    ctx.fillStyle = isSun ? "#4338ca" : "#374151"
-    ctx.textAlign = "left"
-    ctx.fillText(DAYS_SHORT[i], COL.day, midY)
-
-    if (total === 0) {
-      ctx.font = `13px ${FONT}`
-      ctx.fillStyle = "#d1d5db"
-      ctx.textAlign = "right"
-      ctx.fillText("—", COL.done, midY)
-      ctx.fillText("—", COL.skip, midY)
-    } else {
-      const donePct = Math.round((completed / total) * 100)
-      const skipPct = Math.round((skipped / total) * 100)
-
-      // Done
-      ctx.font = `bold 14px ${FONT}`
-      ctx.fillStyle = donePct >= 80 ? "#16a34a" : donePct >= 50 ? "#2563eb" : "#6b7280"
-      ctx.textAlign = "right"
-      ctx.fillText(`${donePct}%`, COL.done, midY)
-
-      // Skipped
-      ctx.font = `13px ${FONT}`
-      ctx.fillStyle = skipPct > 0 ? "#d97706" : "#d1d5db"
-      ctx.fillText(skipPct > 0 ? `${skipPct}%` : "—", COL.skip, midY)
-    }
-
-    // Row separator (not after last day)
-    if (i < 6) {
-      ctx.strokeStyle = "#f3f4f6"
-      ctx.lineWidth = 1
-      ctx.beginPath()
-      ctx.moveTo(PAD, y + ROW_H)
-      ctx.lineTo(W - PAD, y + ROW_H)
-      ctx.stroke()
-    }
-  }
-
-  // Total divider
-  const totalY = startY + 7 * ROW_H + 14
-  ctx.strokeStyle = "#d1d5db"
-  ctx.lineWidth = 1.5
-  ctx.beginPath()
-  ctx.moveTo(PAD, totalY)
-  ctx.lineTo(W - PAD, totalY)
-  ctx.stroke()
-
-  // Total row
-  const tMidY = totalY + 36
-  const wDone = totalEvents > 0 ? Math.round((totalCompleted / totalEvents) * 100) : 0
-  const wSkip = totalEvents > 0 ? Math.round((totalSkipped / totalEvents) * 100) : 0
-
-  ctx.font = `bold 13px ${FONT}`
-  ctx.fillStyle = "#111827"
-  ctx.textAlign = "left"
-  ctx.fillText("Week", COL.day, tMidY)
-
-  ctx.font = `bold 15px ${FONT}`
-  ctx.fillStyle = wDone >= 80 ? "#16a34a" : wDone >= 50 ? "#2563eb" : "#6b7280"
-  ctx.textAlign = "right"
-  ctx.fillText(`${wDone}%`, COL.done, tMidY)
-
-  ctx.font = `13px ${FONT}`
-  ctx.fillStyle = wSkip > 0 ? "#d97706" : "#d1d5db"
-  ctx.fillText(wSkip > 0 ? `${wSkip}%` : "—", COL.skip, tMidY)
-
-  return new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("Canvas toBlob failed"))), "image/png")
-  })
 }
 
 function buildHoursRange(wakeHour: number, sleepHour: number): number[] {
@@ -244,9 +63,6 @@ export default function SchedulePage() {
   const [showSettings, setShowSettings] = useState(false)
   const [tempWake, setTempWake] = useState(12)
   const [tempSleep, setTempSleep] = useState(6)
-
-  const [weekEntriesCache, setWeekEntriesCache] = useState<EventEntry[] | null>(null)
-  const [exportLoading, setExportLoading] = useState(false)
 
   useEffect(() => {
     supabase
@@ -412,49 +228,6 @@ export default function SchedulePage() {
     dayEvents.length > 0 &&
     dayEvents.every((e) => entries.find((en) => en.event_id === e.id)?.status === "completed")
 
-  async function handleExportWeek() {
-    if (exportLoading) return
-    setExportLoading(true)
-    try {
-      const weekDates = getWeekDates()
-      let allWeekEntries = weekEntriesCache
-      if (!allWeekEntries) {
-        const { data } = await supabase
-          .from("schedule_event_entries")
-          .select("*")
-          .eq("user_id", user.id)
-          .in("entry_date", weekDates)
-        allWeekEntries = (data ?? []) as EventEntry[]
-        setWeekEntriesCache(allWeekEntries)
-      }
-      const blob = await generateWeekImage(events, allWeekEntries, weekDates)
-      const fileName = `weekly-review-${weekDates[0]}.png`
-      const file = new File([blob], fileName, { type: "image/png" })
-      if (
-        typeof navigator !== "undefined" &&
-        navigator.share &&
-        navigator.canShare({ files: [file] })
-      ) {
-        await navigator.share({ files: [file], title: "Weekly Review" })
-      } else {
-        // Fallback: trigger download
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement("a")
-        a.href = url
-        a.download = fileName
-        a.click()
-        setTimeout(() => URL.revokeObjectURL(url), 1000)
-      }
-    } catch (err) {
-      // User cancelled share — not an error worth surfacing
-      if (err instanceof Error && err.name !== "AbortError") {
-        console.error("Export failed:", err)
-      }
-    } finally {
-      setExportLoading(false)
-    }
-  }
-
   if (loading) return null
 
   return (
@@ -476,10 +249,6 @@ export default function SchedulePage() {
         }
         .card-enter-left {
           animation: cardFromLeft 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
-        }
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to   { transform: rotate(360deg); }
         }
       `}</style>
 
@@ -717,52 +486,6 @@ export default function SchedulePage() {
                 </div>
               </div>
 
-              {/* Weekly report export — only visible on Sunday, below the calendar */}
-              {dayIndex === 6 && (
-              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
-                <button
-                  onClick={() => void handleExportWeek()}
-                  disabled={exportLoading}
-                  title="Export weekly report"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 6,
-                    padding: "7px 12px",
-                    borderRadius: 9,
-                    border: "1px solid var(--t-input-border)",
-                    background: exportLoading ? "var(--t-p06)" : "var(--t-panel)",
-                    color: exportLoading ? "var(--t-muted)" : "var(--t-primary)",
-                    fontSize: "0.78rem",
-                    fontWeight: 600,
-                    cursor: exportLoading ? "default" : "pointer",
-                    fontFamily: "inherit",
-                    opacity: exportLoading ? 0.6 : 1,
-                    transition: "opacity 0.15s, background 0.15s",
-                    boxShadow: "0 1px 4px var(--t-p08)",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!exportLoading) (e.currentTarget as HTMLButtonElement).style.background = "var(--t-p06)"
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!exportLoading) (e.currentTarget as HTMLButtonElement).style.background = "var(--t-panel)"
-                  }}
-                >
-                  {exportLoading ? (
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: "spin 0.9s linear infinite" }}>
-                      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-                    </svg>
-                  ) : (
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-                      <polyline points="16 6 12 2 8 6" />
-                      <line x1="12" y1="2" x2="12" y2="15" />
-                    </svg>
-                  )}
-                  {exportLoading ? "Generating…" : "Week Report"}
-                </button>
-              </div>
-            )}
             </div>{/* /schedule-calendar */}
           </div>{/* /schedule-left */}
 
