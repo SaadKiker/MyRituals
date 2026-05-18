@@ -10,7 +10,6 @@ type Habit = { id: string; user_id: string; title: string }
 type ScheduleEvent = { id: string; user_id: string; title: string; start_hour: number; start_minute: number; end_hour: number; end_minute: number; color: string }
 type TaskList = { id: string; user_id: string; title: string }
 type Task = { id: string; user_id: string; task_list_id: string; title: string; completed: boolean }
-type Reminder = { id: string; user_id: string; title: string; remind_at: string }
 
 type Data = {
   users: UserRow[]
@@ -20,7 +19,6 @@ type Data = {
   scheduleEvents: ScheduleEvent[]
   taskLists: TaskList[]
   tasks: Task[]
-  reminders: Reminder[]
 }
 
 export default function AdminPage() {
@@ -57,7 +55,6 @@ export default function AdminPage() {
         const userEvents = data.scheduleEvents.filter((e) => e.user_id === u.id)
         const userTaskLists = data.taskLists.filter((tl) => tl.user_id === u.id)
         const userTasks = data.tasks.filter((t) => t.user_id === u.id)
-        const userReminders = data.reminders.filter((r) => r.user_id === u.id)
 
         return (
           <div key={u.id} style={s.card}>
@@ -66,7 +63,7 @@ export default function AdminPage() {
               <span style={s.meta}>
                 joined {new Date(u.created_at).toLocaleDateString()} ·{" "}
                 last seen {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString() : "never"} ·{" "}
-                {userGoalSets.length} goal sets · {userHabits.length} habits · {userEvents.length} events · {userTaskLists.length} task lists · {userTasks.length} tasks · {userReminders.length} reminders
+                {userGoalSets.length} goal sets · {userHabits.length} habits · {userEvents.length} events · {userTaskLists.length} task lists · {userTasks.length} tasks
               </span>
               <span>{open ? "▲" : "▼"}</span>
             </div>
@@ -113,13 +110,6 @@ export default function AdminPage() {
                   ))}
                 </Section>
 
-                <Section title="Reminders">
-                  {userReminders.length === 0 ? <Empty /> : userReminders.map((r) => (
-                    <div key={r.id} style={s.row}>
-                      {new Date(r.remind_at).toLocaleString()} · {r.title || "(untitled)"}
-                    </div>
-                  ))}
-                </Section>
               </div>
             )}
           </div>

@@ -195,7 +195,7 @@ export default function GoalSet({ goalSet, userId, onDelete, onUpdate, onDragSta
           }}
         />
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {/* Countdown Badge — overlay input pattern (same as RemindersPanel date chip) */}
+          {/* Countdown Badge */}
           <div
             style={{
               position: "relative",
